@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: order-service
+  name: order-service-deploy
 spec:
   replicas: 1
   selector:
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: h4s1nth4/order-service:latest
+          image: order-service:latestlocal
           ports:
             - containerPort: 8082
 
@@ -30,4 +30,7 @@ spec:
     - protocol: TCP
       port: 8082
       targetPort: 8082
-  type: ClusterIP
+  type: NodePort
+
+
+

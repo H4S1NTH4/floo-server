@@ -6,15 +6,15 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: auth-service-pod
+      app: auth-service
   template:
     metadata:
       labels:
-        app: auth-service-pod  # Ensure this label matches the service selector
+        app: auth-service  # Ensure this label matches the service selector
     spec:
       containers:
         - name: auth-service
-          image: h4s1nth4/floo-docker:auth-service-v2
+          image:  auth-service:latestlocal #h4s1nth4/floo-docker:auth-service-v2
           ports:
             - containerPort: 8081
 
@@ -25,7 +25,7 @@ metadata:
   name: auth-service
 spec:
   selector:
-    app: auth-service-pod  # This must match the pod's label in the deployment
+    app: auth-service  # This must match the pod's label in the deployment
   ports:
     - protocol: TCP
       port: 8081
