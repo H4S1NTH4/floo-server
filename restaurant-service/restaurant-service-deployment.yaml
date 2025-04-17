@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restaurant-service-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: restaurant-service
+  template:
+    metadata:
+      labels:
+        app: restaurant-service # Ensure this label matches the service selector
+    spec:
+      containers:
+        - name: restaurant-service
+          image: snimasha/myfloo:restaurant-service
+          ports:
+            - containerPort: 8080
+      
