@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("api/auth")
 public class AuthController {
-
     @GetMapping("/test")
     public String testAuthService() {
         return "Auth Service is running!";
