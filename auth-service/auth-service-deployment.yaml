@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image:  auth-service:latestlocal #h4s1nth4/floo-docker:auth-service-v2
+          image: auth-service:le #h4s1nth4/floo-docker:auth-service-v2
           ports:
             - containerPort: 8081
 
