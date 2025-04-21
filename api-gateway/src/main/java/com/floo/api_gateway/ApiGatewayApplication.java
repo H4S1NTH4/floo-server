@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @SpringBootApplication
-@EnableDiscoveryClient  // enable kube service discovery
+@EnableDiscoveryClient
 public class ApiGatewayApplication {
 
 	public static void main(String[] args) {
@@ -21,24 +21,24 @@ public class ApiGatewayApplication {
 	@Configuration
 	static class GatewayConfig {
 
-		@Bean
-		public RouteLocator myRoutes(RouteLocatorBuilder builder) {
-			return builder.routes()
-					.route("auth-service-route", p -> p
-							.path("/auth-service/**")
-							.filters(f -> f.stripPrefix(1))
-							.uri("lb://auth-service"))
-					.route("order-service-route", p -> p
-							.path("/order-service/**")
-							.filters(f -> f.stripPrefix(1))
-							.uri("lb://order-service"))
-					.route("test-route", p -> p
-							.path("/test/**")
-							.filters(f -> f.stripPrefix(1))
-							.uri("http://auth-service.default.svc.cluster.local:8081")
-					)
-					.build();
-		}
+//		@Bean
+//		public RouteLocator myRoutes(RouteLocatorBuilder builder) {
+//			return builder.routes()
+//					.route("auth-service-route", p -> p
+//							.path("/auth-service/**")
+//							.filters(f -> f.stripPrefix(1))
+//							.uri("lb://auth-service"))
+//					.route("order-service-route", p -> p
+//							.path("/order-service/**")
+//							.filters(f -> f.stripPrefix(1))
+//							.uri("lb://order-service"))
+//					.route("test-route", p -> p
+//							.path("/test/**")
+//							.filters(f -> f.stripPrefix(1))
+//							.uri("http://auth-service.default.svc.cluster.local:8081")
+//					)
+//					.build();
+//		}
 
 		@Bean
 		public ApplicationRunner runner(DiscoveryClient discoveryClient) {
