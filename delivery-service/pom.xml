@@ -73,6 +73,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!--open feign for  service-service communication-->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>
