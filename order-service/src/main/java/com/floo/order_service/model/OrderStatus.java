@@ -1,0 +1,12 @@
+package com.floo.order_service.model;
+
+public enum OrderStatus {
+    PENDING,           // Order created, awaiting payment
+    PREPARING,         // Order is being prepared
+    READY,             // Order is ready for pickup or delivery
+    OUT_FOR_DELIVERY,  // Order has left for delivery
+    DELIVERING,        // Currently being delivered
+    DELIVERED,         // Items have been delivered
+    COMPLETED,         // Payment completed and process finalized
+    CANCELLED          // Order was cancelled
+}
