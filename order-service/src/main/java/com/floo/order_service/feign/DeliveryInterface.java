@@ -17,6 +17,6 @@ public interface DeliveryInterface {
     ResponseEntity<?> createDeliveryTask(@RequestBody Order order);
 
     @PostMapping("/api/v1/delivery/test")
-    public ResponseEntity<String> testDeliveryService();
+    ResponseEntity<String> testDeliveryService();
 
 }
