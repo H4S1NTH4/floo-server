@@ -2,6 +2,9 @@
 Floo - A cloud native food delivery application built using micro service architecture.
 
 
+## MVN Command build the project without tests
+>mvn clean install -DskipTests 
+
 ## How to setup a secret in kubernetes
 
 >kubectl create secret generic mongo-secret \
