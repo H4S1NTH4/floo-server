@@ -1,14 +1,29 @@
-
 package com.floo.payment_service.controller;
+
+import com.floo.payment_service.entity.Payment;
+import com.floo.payment_service.service.PaymentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("api/v1/payment")
+@RequestMapping("/api/v1/payment")
 public class PaymentController {
-    @GetMapping("/test")
-    public String testPaymentService() {
-        return "Payment Service is running!";
+    @Autowired
+    private PaymentService paymentService;
+
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<Payment> getPaymentById(@PathVariable String paymentId) {
+        return ResponseEntity.ok(paymentService.getPaymentById(paymentId));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Payment>> getAllPayments() {
+        return ResponseEntity.ok(paymentService.getAllPayments());
     }
 }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/product/v1")
+@RequestMapping("/api/v1/payment/strip")
 public class ProductCheckoutController {
 
 
