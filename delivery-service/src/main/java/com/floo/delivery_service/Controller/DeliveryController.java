@@ -41,5 +41,9 @@ public class DeliveryController {
         return ResponseEntity.ok().build();
     }
 
+    //findDriverSessionByDriverId
+    // public WebSocketSession getSessionByDriverId(String driverId) {
+    //    return driverSessions.get(driverId);
+    //}
 
 }

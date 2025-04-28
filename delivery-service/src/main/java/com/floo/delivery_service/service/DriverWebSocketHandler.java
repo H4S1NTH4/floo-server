@@ -10,20 +10,38 @@ import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class DriverWebSocketHandler implements WebSocketHandler {
 
-    private static final Map<String, WebSocketSession> driverSessions = new ConcurrentHashMap<>();
+    //session storage with driverId as the key
+    protected static final Map<String, WebSocketSession> driverSessions = new ConcurrentHashMap<>();
+    // In-memory storage of driver objects with driverId as the key
+    private static final Map<String, Driver> driverMemory = new ConcurrentHashMap<>();
+
 
     @Autowired
     DriverRepository driverRepository;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String driverId = (String) session.getAttributes().get("driverId");
+        //websocket path: ws/driver/{driverId}
+        // Extract the driverId from the WebSocket URI
+        String driverId = session.getUri().getPath().split("/")[3];  // Assuming the URI is /ws/driver/{driverId}
+
+        // Retrieve driver from database or create a new one if not found
+        Driver driver = driverRepository.findById(driverId).orElseThrow(() ->new NoSuchElementException("Driver not found"));
+
+        // Store the driverId in the session attributes
+        session.getAttributes().put("driverId", driverId);
         driverSessions.put(driverId, session);
+
+        //Store the driver object in the session attributes
+        session.getAttributes().put("driver", driver);
+        // Put the driver object in memory
+        driverMemory.put(driverId, driver);
         // Mark the driver as online and available, e.g., by updating the database
     }
 
@@ -32,12 +50,13 @@ public class DriverWebSocketHandler implements WebSocketHandler {
         // Process incoming messages, e.g., location updates or availability changes
         String driverId = (String) session.getAttributes().get("driverId");
         String payload = (String) message.getPayload();
-
-        // Handle the driver location update or availability change
+        Driver driver = (Driver) session.getAttributes().get("driver");
         // You could deserialize the payload to a JSON object
-        Driver driver = driverRepository.findById(driverId).get();
-        driver.setLocation(payload);  // Assuming payload contains the location data
-        driverRepository.save(driver);
+        // driver location update
+        driver.setDriverLocationFromWebSocketPayload(payload);
+
+
+
     }
 
     @Override
