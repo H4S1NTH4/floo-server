@@ -1,4 +1,8 @@
 package com.floo.auth_service.controller;
+import com.floo.auth_service.dto.LoginRequest;
+import com.floo.auth_service.dto.RegisterRequest;
+import com.floo.auth_service.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -6,10 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("api/v1/auth")
 public class AuthController {
-    @GetMapping("/test")
-    public String testAuthService() {
-        return "Auth Service is running!";
-    }
+
 
     @Autowired
     private AuthService authService;
@@ -29,6 +30,11 @@ public class AuthController {
     public ResponseEntity<?> getProfile(HttpServletRequest request) {
         return ResponseEntity.ok(authService.getProfile(request));
     }
+
+    @GetMapping("/test")
+    public String testAuthService() {
+        return "Auth Service is running!";
+    }
 }
 
-}
+
