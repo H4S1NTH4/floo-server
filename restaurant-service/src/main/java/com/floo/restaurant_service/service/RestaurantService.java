@@ -1,12 +1,8 @@
 package com.floo.restaurant_service.service;
 
-import com.floo.restaurant_service.dto.OrderDto;
-import com.floo.restaurant_service.dto.OrderItemDto;
+import com.floo.restaurant_service.dto.*;
 import com.floo.restaurant_service.feign.DeliveryServiceClient;
 import com.floo.restaurant_service.feign.OrderServiceClient;
-import com.floo.restaurant_service.dto.RestaurantDto;
-import com.floo.restaurant_service.dto.RestaurantRequest;
-import com.floo.restaurant_service.dto.RestaurantResponse;
 import com.floo.restaurant_service.model.MenuItem;
 import com.floo.restaurant_service.model.Order;
 import com.floo.restaurant_service.model.OrderItem;
@@ -138,9 +134,25 @@ public class RestaurantService {
                 .pastOrders(convertToOrderDtos(restaurant.getPastOrders()))
                 .build();
 
-        List<MenuItem> menuItems = menuItemRepository.findByRestaurantId(restaurant.getId());
-        dto.setMenuItems(menuItems);
+        List<MenuItemDto> menuItemDtos = menuItemRepository.findByRestaurantId(restaurant.getId())
+                .stream()
+                .map(this::convertToMenuItemDto)
+                .collect(Collectors.toList());
+
+        dto.setMenuItems(menuItemDtos);
         return dto;
+    }
+
+    private MenuItemDto convertToMenuItemDto(MenuItem menuItem) {
+        return MenuItemDto.builder()
+                .id(menuItem.getId())
+                .name(menuItem.getName())
+                .description(menuItem.getDescription())
+                .price(menuItem.getPrice())
+                .icon(menuItem.getIcon())
+                .quantity(menuItem.getQuantity())
+                .restaurantId(menuItem.getRestaurantId())
+                .build();
     }
 
     private List<OrderDto> convertToOrderDtos(List<Order> orders) {

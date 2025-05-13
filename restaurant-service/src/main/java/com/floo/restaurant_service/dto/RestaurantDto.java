@@ -1,7 +1,6 @@
 package com.floo.restaurant_service.dto;
 
 import com.floo.restaurant_service.model.Address;
-import com.floo.restaurant_service.model.MenuItem;
 import com.floo.restaurant_service.model.Restaurant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
