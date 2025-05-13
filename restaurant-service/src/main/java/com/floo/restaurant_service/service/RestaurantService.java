@@ -1,10 +1,15 @@
 package com.floo.restaurant_service.service;
 
+import com.floo.restaurant_service.dto.OrderDto;
+import com.floo.restaurant_service.dto.OrderItemDto;
+import com.floo.restaurant_service.feign.DeliveryServiceClient;
+import com.floo.restaurant_service.feign.OrderServiceClient;
 import com.floo.restaurant_service.dto.RestaurantDto;
 import com.floo.restaurant_service.dto.RestaurantRequest;
 import com.floo.restaurant_service.dto.RestaurantResponse;
 import com.floo.restaurant_service.model.MenuItem;
-import com.floo.restaurant_service.model.OwnerInfo;
+import com.floo.restaurant_service.model.Order;
+import com.floo.restaurant_service.model.OrderItem;
 import com.floo.restaurant_service.model.Restaurant;
 import com.floo.restaurant_service.repository.MenuItemRepository;
 import com.floo.restaurant_service.repository.RestaurantRepository;
@@ -13,11 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriBuilder;
-import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +35,9 @@ public class RestaurantService {
 
     @Autowired
     private WebClient.Builder webClientBuilder;
+
+    private final OrderServiceClient orderServiceClient;
+    private final DeliveryServiceClient deliveryServiceClient;
 
     private final String ROLE = "RESTAURANT_OWNER";
     private final String ADMIN_ROLE = "ADMIN";
@@ -126,10 +133,112 @@ public class RestaurantService {
                 .rating(restaurant.getRating())
                 .isAvailable(restaurant.isAvailable())
                 .isVerified(restaurant.isVerified())
+                .status(Restaurant.RestaurantStatus.valueOf(restaurant.getStatus().toString()))
+                .activeOrders(convertToOrderDtos(restaurant.getActiveOrders()))
+                .pastOrders(convertToOrderDtos(restaurant.getPastOrders()))
                 .build();
 
         List<MenuItem> menuItems = menuItemRepository.findByRestaurantId(restaurant.getId());
         dto.setMenuItems(menuItems);
         return dto;
+    }
+
+    private List<OrderDto> convertToOrderDtos(List<Order> orders) {
+        return orders.stream()
+                .map(this::convertToOrderDto)
+                .collect(Collectors.toList());
+    }
+
+    private OrderDto convertToOrderDto(Order order) {
+        return OrderDto.builder()
+                .id(order.getId())
+                .orderId(order.getOrderId())
+                .restaurantId(order.getRestaurantId())
+                .userId(order.getUserId())
+                .items(convertToOrderItemDtos(order.getItems()))
+                .totalPrice(BigDecimal.valueOf(order.getTotalPrice()))
+                .status(order.getStatus().toString())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
+                .deliveryAddress(order.getDeliveryAddress())
+                .build();
+    }
+
+    private List<OrderItemDto> convertToOrderItemDtos(List<OrderItem> items) {
+        return items.stream()
+                .map(this::convertToOrderItemDto)
+                .collect(Collectors.toList());
+    }
+
+    private OrderItemDto convertToOrderItemDto(OrderItem item) {
+        return OrderItemDto.builder()
+                .menuItemId(item.getMenuItemId())
+                .name(item.getName())
+                .quantity(item.getQuantity())
+                .price(item.getPrice())
+                .build();
+    }
+
+    public String updateRestaurantStatus(String id, Restaurant.RestaurantStatus status) {
+        return restaurantRepository.findById(id)
+                .map(restaurant -> {
+                    restaurant.setStatus(status);
+                    restaurantRepository.save(restaurant);
+                    return "Restaurant status updated to: " + status;
+                })
+                .orElse("Restaurant not found");
+    }
+
+    @Transactional
+    public String addOrderToRestaurant(String restaurantId, Order order) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+
+        order.setStatus(Order.OrderStatus.RECEIVED);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+
+        restaurant.getActiveOrders().add(order);
+        restaurantRepository.save(restaurant);
+
+        return "Order added to restaurant successfully";
+    }
+
+    @Transactional
+    public String updateOrderStatus(String restaurantId, String orderId, Order.OrderStatus status) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+
+        Order order = restaurant.getActiveOrders().stream()
+                .filter(o -> o.getOrderId().equals(orderId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        order.setStatus(status);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        if (status == Order.OrderStatus.READY_FOR_PICKUP) {
+            deliveryServiceClient.notifyDeliveryReady(order);
+        }
+
+        if (status == Order.OrderStatus.PICKED_UP) {
+            restaurant.getActiveOrders().remove(order);
+            restaurant.getPastOrders().add(order);
+        }
+
+        restaurantRepository.save(restaurant);
+        return "Order status updated successfully";
+    }
+
+    public List<Order> getActiveOrders(String restaurantId) {
+        return restaurantRepository.findById(restaurantId)
+                .map(Restaurant::getActiveOrders)
+                .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+    }
+
+    public List<Order> getPastOrders(String restaurantId) {
+        return restaurantRepository.findById(restaurantId)
+                .map(Restaurant::getPastOrders)
+                .orElseThrow(() -> new RuntimeException("Restaurant not found"));
     }
 }

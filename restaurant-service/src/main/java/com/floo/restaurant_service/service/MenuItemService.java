@@ -91,4 +91,18 @@ public class MenuItemService {
             });
         }
     }
+
+    public void updateStock(String menuItemId, int quantityChange) {
+        menuItemRepository.findById(menuItemId).ifPresent(menuItem -> {
+            int newQuantity = menuItem.getQuantity() + quantityChange;
+            menuItem.setQuantity(Math.max(newQuantity, 0));
+            menuItemRepository.save(menuItem);
+        });
+    }
+
+    public boolean isItemAvailable(String menuItemId, int quantity) {
+        return menuItemRepository.findById(menuItemId)
+                .map(item -> item.getQuantity() >= quantity)
+                .orElse(false);
+    }
 }
