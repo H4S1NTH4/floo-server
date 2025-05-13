@@ -31,4 +31,6 @@ public class Order {
     private OrderStatus orderStatus;
     private String paymentId;
     private String userId;
+
+    private List<StatusChange> statusHistory;
 }

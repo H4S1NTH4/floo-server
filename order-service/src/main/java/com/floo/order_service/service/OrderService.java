@@ -4,6 +4,7 @@ import com.floo.order_service.dto.OrderUpdateResponse;
 import com.floo.order_service.feign.DeliveryInterface;
 import com.floo.order_service.model.Order;
 import com.floo.order_service.model.OrderStatus;
+import com.floo.order_service.model.StatusChange;
 import com.floo.order_service.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -93,6 +94,12 @@ public class OrderService {
             if (existingOrder == null) {
                 return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
             }
+
+            // Track timeline
+            List<StatusChange> history = existingOrder.getStatusHistory();
+            if (history == null) history = new ArrayList<>();
+            history.add(new StatusChange(newStatus, System.currentTimeMillis()));
+            existingOrder.setStatusHistory(history);
 
             existingOrder.setOrderStatus(newStatus);
             Order savedOrder = orderRepository.save(existingOrder);
