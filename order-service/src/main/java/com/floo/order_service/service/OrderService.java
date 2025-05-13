@@ -1,7 +1,9 @@
 package com.floo.order_service.service;
 
+import com.floo.order_service.dto.OrderNotificationDto;
 import com.floo.order_service.dto.OrderUpdateResponse;
 import com.floo.order_service.feign.DeliveryInterface;
+import com.floo.order_service.feign.RestaurantInterface;
 import com.floo.order_service.model.Order;
 import com.floo.order_service.model.OrderStatus;
 import com.floo.order_service.model.StatusChange;
@@ -25,6 +27,9 @@ public class OrderService {
     @Autowired
     DeliveryInterface deliveryInterface;
 
+    @Autowired
+    private RestaurantInterface restaurantInterface;
+
 
     public ResponseEntity<List<Order>> getAllOrders() {
         try {
@@ -38,17 +43,36 @@ public class OrderService {
     }
 
     public ResponseEntity<String> addOrder(Order order) {
-        orderRepository.save(order);
-
         try {
-            return new ResponseEntity<>("Order created successfully", HttpStatus.CREATED);
+            // Set initial status
+            order.setOrderStatus(OrderStatus.PENDING);
+
+            // Add to status history
+            order.setStatusHistory(new ArrayList<>());
+            order.getStatusHistory().add(new StatusChange(OrderStatus.PENDING, System.currentTimeMillis()));
+
+            // Save order to DB
+            Order savedOrder = orderRepository.save(order);
+
+            // Notify restaurant service
+            OrderNotificationDto notification = new OrderNotificationDto(
+                    savedOrder.getId(),
+                    savedOrder.getOrderStatus().name(),
+                    savedOrder.getCustomerId(),
+                    savedOrder.getRestaurantId(),
+                    savedOrder.getDeliveryAddress(),
+                    System.currentTimeMillis()
+            );
+
+            restaurantInterface.notifyRestaurant(order.getRestaurantId(), notification);
+
+            return new ResponseEntity<>("Order created and restaurant notified successfully", HttpStatus.CREATED);
         } catch (Exception e) {
             e.printStackTrace();
+            return new ResponseEntity<>("Order creation failed", HttpStatus.BAD_REQUEST);
         }
-
-        return new ResponseEntity<>("Order creation failed", HttpStatus.BAD_REQUEST);
-
     }
+
 
     public ResponseEntity<?> updateOrder(String orderId, Order updatedOrder) {
         try {
@@ -104,16 +128,28 @@ public class OrderService {
             existingOrder.setOrderStatus(newStatus);
             Order savedOrder = orderRepository.save(existingOrder);
 
-            // If status is READY, notify delivery service
-            if (newStatus == OrderStatus.READY) {
-                try {
-                    ResponseEntity<String> deliveryResponse = deliveryInterface.testDeliveryService();
-                    // Optional: Handle delivery service response if needed
-                } catch (Exception e) {
-                    // Log error but continue with status update
-                    System.err.println("Failed to notify delivery service: " + e.getMessage());
-                    // Consider implementing retry logic or queue mechanism
-                }
+            // Create notification payload
+            OrderNotificationDto notification = new OrderNotificationDto(
+                    savedOrder.getId(),
+                    newStatus.name(),
+                    savedOrder.getCustomerId(),
+                    existingOrder.getRestaurantId(),  // Ensure restaurantId comes from existingOrder
+                    savedOrder.getDeliveryAddress(),
+                    System.currentTimeMillis()
+            );
+
+            String restaurantId = existingOrder.getRestaurantId();
+
+            // Notify restaurant if relevant
+            if (newStatus == OrderStatus.PENDING) {
+                restaurantInterface.notifyRestaurant(restaurantId,notification);
+            }
+
+            // Notify delivery service if relevant
+            if (newStatus == OrderStatus.READY ||
+                    newStatus == OrderStatus.OUT_FOR_DELIVERY ||
+                    newStatus == OrderStatus.DELIVERING) {
+                deliveryInterface.notifyDelivery(notification);
             }
 
             return new ResponseEntity<>(
@@ -125,6 +161,7 @@ public class OrderService {
             return new ResponseEntity<>("Failed to update order status", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     public ResponseEntity<?> getOrderById(String orderId) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
