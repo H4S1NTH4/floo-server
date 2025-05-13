@@ -62,4 +62,3 @@ public class RestaurantController {
         return restaurantService.verifyRestaurant(id, isApproved);
     }
 }
-
