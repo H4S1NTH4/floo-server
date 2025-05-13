@@ -14,7 +14,7 @@ public interface RestaurantInterface {
     // ResponseEntity<Restaurant> getRestaurantById(@PathVariable String id);
 
     @PostMapping("/api/v1/restaurant/order/notify")
-    ResponseEntity<String> notifyRestaurant(@RequestBody String restaurantId, OrderNotificationDto orderNotification);
+    ResponseEntity<String> notifyRestaurant(@RequestBody OrderNotificationDto orderNotification);
 
 
 
