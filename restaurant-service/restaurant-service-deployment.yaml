@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: restaurant-service
-          image: snimasha/myfloo:restaurant-service
+          image: restaurant-service:le #snimasha/myfloo:restaurant-service
           ports:
             - containerPort: 8080
       
