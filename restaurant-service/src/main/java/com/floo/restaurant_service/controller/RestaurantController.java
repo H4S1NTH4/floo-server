@@ -96,4 +96,9 @@ public class RestaurantController {
     public List<Order> getPastOrders(@PathVariable String id) {
         return restaurantService.getPastOrders(id);
     }
+
+    @GetMapping("/test")
+    public String testRestaurantService() {
+        return "Restaurant Service is running!";
+    }
 }
