@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OrderService {
@@ -33,7 +34,6 @@ public class OrderService {
         }
 
         return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
-
     }
 
     public ResponseEntity<String> addOrder(Order order) {
@@ -116,6 +116,49 @@ public class OrderService {
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>("Failed to update order status", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> getOrderById(String orderId) {
+        Optional<Order> orderOptional = orderRepository.findById(orderId);
+        if (orderOptional.isPresent()) {
+            return new ResponseEntity<>(orderOptional.get(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public ResponseEntity<List<Order>> getOrdersByCustomerId(String customerId) {
+        try {
+            List<Order> orders = orderRepository.findByCustomerId(customerId);
+            return new ResponseEntity<>(orders, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<List<Order>> getOrdersByRestaurantId(String restaurantId) {
+        try {
+            List<Order> orders = orderRepository.findByRestaurantId(restaurantId);
+            return new ResponseEntity<>(orders, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> getOrderByIdAndStatus(String orderId, OrderStatus status) {
+        try {
+            Order order = orderRepository.findByIdAndOrderStatus(orderId, status);
+            if (order != null) {
+                return new ResponseEntity<>(order, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Order not found with given status", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Error fetching order", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
