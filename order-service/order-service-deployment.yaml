@@ -11,6 +11,8 @@ spec:
     metadata:
       labels:
         app: order-service
+      annotations:
+        kubernetes.io/change-cause: "Update on 2025-05-14 02:14:04 by BilalR4M"
     spec:
       containers:
         - name: order-service
@@ -18,7 +20,12 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
-
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_URI
 ---
 apiVersion: v1
 kind: Service

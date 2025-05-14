@@ -1,5 +1,6 @@
 package com.floo.order_service.feign;
 
+import com.floo.order_service.dto.OrderNotificationDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,9 @@ public interface DeliveryInterface {
     ResponseEntity<?> createDeliveryTask(@RequestBody Order order);
 
     @PostMapping("/api/v1/delivery/test")
-    public ResponseEntity<String> testDeliveryService();
+    ResponseEntity<String> testDeliveryService();
+
+    @PostMapping("/api/v1/delivery/order/assign")
+    ResponseEntity<String> notifyDelivery(@RequestBody OrderNotificationDto orderNotification);
 
 }
