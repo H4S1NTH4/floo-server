@@ -11,6 +11,8 @@ spec:
     metadata:
       labels:
         app: order-service
+      annotations:
+        kubernetes.io/change-cause: "Update on 2025-05-14 02:14:04 by BilalR4M"
     spec:
       containers:
         - name: order-service
