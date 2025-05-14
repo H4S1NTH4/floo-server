@@ -10,8 +10,9 @@ import java.math.BigDecimal;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Document
 public class OrderItem {
+    private String foodItemId;
     private String name;
     private BigDecimal price;
     private Integer quantity;
-    private String foodItemId;
+    private String imageUrl;
 }
