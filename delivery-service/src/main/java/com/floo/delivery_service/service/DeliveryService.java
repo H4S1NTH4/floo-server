@@ -1,16 +1,23 @@
 package com.floo.delivery_service.service;
 import com.floo.delivery_service.dto.OrderDTO;
 import com.floo.delivery_service.entity.Driver;
+import com.floo.delivery_service.entity.DriverLocation;
 import com.floo.delivery_service.entity.DriverStatus;
+import com.floo.delivery_service.repository.DriverRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
-import javax.xml.stream.Location;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DeliveryService {
+
+    @Autowired
+    DriverRepository driverRepository;
 
     public ResponseEntity<?> assignDriver(OrderDTO orderData) {
         Driver driver = findDriver(orderData);
@@ -36,7 +43,7 @@ public class DeliveryService {
             return null;
         }
 
-        Location orderPickupLocation = orderDetails.getPickupLocation();
+        DriverLocation orderPickupLocation = orderDetails.getPickupLocation();
         Driver bestDriver = null;
         double minDistance = Double.MAX_VALUE;
 
@@ -54,7 +61,7 @@ public class DeliveryService {
             // A driver is considered available if they are ONLINE.
             // The canFulfillOrder method can include other checks like vehicle type, c apacity, etc.
             if (driver.getStatus() == DriverStatus.ONLINE ) {
-                Location driverLocation = driver.getLocation(); // Assumes Driver has getCurrentLocation()
+                DriverLocation driverLocation = driver.getDriverLocation(); // Assumes Driver has getCurrentLocation()
 
                 if (driverLocation != null) {
                     double distance = calculateDistance(orderPickupLocation, driverLocation);
@@ -91,7 +98,7 @@ public class DeliveryService {
      * Helper method to calculate the distance between two locations.
      * Replace with your actual distance calculation logic (e.g., Haversine formula for lat/long).
      */
-    private double calculateDistance(Location loc1, Location loc2) {
+    private double calculateDistance(DriverLocation loc1, DriverLocation loc2) {
         if (loc1 == null || loc2 == null) {
             return Double.MAX_VALUE;
         }
@@ -112,23 +119,135 @@ public class DeliveryService {
 //        return Math.sqrt(dx * dx + dy * dy);
         return 0.0;
     }
+    public ResponseEntity<?> createDriver(Driver driver) {
+        try {
+            // Ensure driver location is initialized if not provided
+            if (driver.getDriverLocation() == null) {
+                driver.setDriverLocation(new DriverLocation(0.0, 0.0)); // Default location
+            }
+            // Set default status if not provided
+            if (driver.getStatus() == null) {
+                driver.setStatus(DriverStatus.OFFLINE);
+            }
+            // Set default availability if not provided
+            if (driver.getAvailable() == null) {
+                driver.setAvailable(false);
+            }
+            Driver savedDriver = driverRepository.save(driver);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedDriver);
+        } catch (Exception e) {
+            // Log the exception for debugging
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating driver: " + e.getMessage());
+        }
+    }
+
+    // update driver STATUS
+    public ResponseEntity<?> updateDriverStatus(String driverId, DriverStatus newStatus) {
+        Optional<Driver> driverOptional = driverRepository.findById(driverId);
+        if (driverOptional.isPresent()) {
+            Driver driver = driverOptional.get();
+            driver.setStatus(newStatus);
+            // Logic for availability based on status
+            if (newStatus == DriverStatus.ONLINE) {
+                driver.setAvailable(true); // Typically, a driver coming online is available
+            } else if (newStatus == DriverStatus.OFFLINE || newStatus == DriverStatus.DELIVERY) {
+                driver.setAvailable(false);
+            }
+            // For UNAVAILABLE status, availability should be explicitly managed or remain as is.
+            // If newStatus is UNAVAILABLE, we might assume they are not available for new tasks.
+            // else if (newStatus == DriverStatus.UNAVAILABLE) {
+            //    driver.setAvailable(false);
+            // }
+
+            Driver updatedDriver = driverRepository.save(driver);
+            return ResponseEntity.ok(updatedDriver);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Driver not found with ID: " + driverId);
+        }
+    }
+
+    /**
+     * Updates the information of an existing driver.
+     * Can update name, availability. Location is typically updated via WebSocket.
+     *
+     * @param driverId      The ID of the driver to update.
+     * @param driverDetails The driver object with updated details.
+     * @return ResponseEntity with the updated driver or an error message.
+     */
+    public ResponseEntity<?> updateDriverInfo(String driverId, Driver driverDetails) {
+        Optional<Driver> driverOptional = driverRepository.findById(driverId);
+        if (driverOptional.isPresent()) {
+            Driver existingDriver = driverOptional.get();
+            // Update name if provided
+            if (driverDetails.getName() != null && !driverDetails.getName().isEmpty()) {
+                existingDriver.setName(driverDetails.getName());
+            }
+            // Update availability if provided
+            if (driverDetails.getAvailable() != null) {
+                existingDriver.setAvailable(driverDetails.getAvailable());
+            }
+            // Update status if provided (and valid)
+            if (driverDetails.getStatus() != null) {
+                existingDriver.setStatus(driverDetails.getStatus());
+            }
+            // Note: DriverLocation is usually updated through a different mechanism (e.g., WebSocket)
+            // If you want to allow HTTP update for location too, uncomment and adapt:
+            // if (driverDetails.getDriverLocation() != null) {
+            //    existingDriver.setDriverLocation(driverDetails.getDriverLocation());
+            // }
+
+            Driver updatedDriver = driverRepository.save(existingDriver);
+            return ResponseEntity.ok(updatedDriver);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Driver not found with ID: " + driverId);
+        }
+    }
+
+    /**
+     * Deletes a driver by their ID.
+     *
+     * @param driverId The ID of the driver to delete.
+     * @return ResponseEntity indicating success or failure.
+     */
+    public ResponseEntity<?> deleteDriver(String driverId) {
+        if (driverRepository.existsById(driverId)) {
+            driverRepository.deleteById(driverId);
+            return ResponseEntity.ok().body("Driver with ID: " + driverId + " deleted successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Driver not found with ID: " + driverId);
+        }
+    }
+
+    /**
+     * Gets a driver by their ID.
+     *
+     * @param driverId The ID of the driver to retrieve.
+     * @return ResponseEntity with the driver data or a not found message.
+     */
+    public ResponseEntity<?> getDriverById(String driverId) {
+        Optional<Driver> driverOptional = driverRepository.findById(driverId);
+        if (driverOptional.isPresent()) {
+            return ResponseEntity.ok(driverOptional.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Driver not found with ID: " + driverId);
+        }
+    }
+
+    /**
+     * Gets all drivers.
+     * @return ResponseEntity with a list of all drivers.
+     */
+    public ResponseEntity<?> getAllDrivers() {
+        try {
+            List<Driver> drivers = driverRepository.findAll();
+            if (drivers.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No drivers found.");
+            }
+            return ResponseEntity.ok(drivers);
+        } catch (Exception e) {
+            // Log error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving drivers: " + e.getMessage());
+        }
+    }
+
 }
-
-
-
-//    private List<Driver> getAvailableDrivers() {
-//
-//
-//    }
-
-
-//    //update order status
-//    public void updateOrderStatus(){
-//
-//    }
-//
-//    //notify to a customer
-//    public void notifyCustomer() {
-//
-//    }
-//}

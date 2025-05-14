@@ -9,6 +9,8 @@ public class DriverLocation {
         this.longitude = longitude;
     }
 
+    public DriverLocation( ) {  }
+
     public double getLatitude() {
         return latitude;
     }
