@@ -5,6 +5,10 @@ public class PaymentInterface {
     // For example, you might have a method to process a payment
     // public PaymentResponse processPayment(PaymentRequest paymentRequest);
 
-    // You can also define methods for other payment-related operations
+    // You can also
+    // define methods for other payment-related operations
     // such as refunding a payment, checking payment status, etc.
 }
+
+
+

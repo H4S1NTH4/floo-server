@@ -16,6 +16,4 @@ public interface RestaurantInterface {
     @PostMapping("/api/v1/restaurant/order/notify")
     ResponseEntity<String> notifyRestaurant(@RequestBody OrderNotificationDto orderNotification);
 
-
-
 }
