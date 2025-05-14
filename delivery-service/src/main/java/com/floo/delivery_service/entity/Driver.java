@@ -5,6 +5,8 @@ import com.floo.delivery_service.dto.DriverWsPayload;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.xml.stream.Location;
+
 @Document(collection = "driver")
 public class Driver {
     @Id
@@ -14,6 +16,7 @@ public class Driver {
     private DriverStatus status;
     private Boolean available;
     private DriverLocation driverLocation;
+    private Location location;
 
     public Driver(String name, DriverLocation driverLocation, DriverStatus status) {
         this.name = name;
@@ -73,6 +76,14 @@ public class Driver {
 
     public void setAvailable(Boolean available) {
         this.available = available;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
     }
 }
 

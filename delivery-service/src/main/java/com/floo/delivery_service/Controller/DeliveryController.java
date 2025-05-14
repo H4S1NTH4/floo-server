@@ -22,24 +22,22 @@ public class DeliveryController {
     @Autowired
     private DeliveryService deliveryService;
 
-    @PostMapping("/{orderId}")
-//    @ResponseStatus(HttpStatus.CREATED)
-    public String deliverOrder(@PathVariable String orderId) {
-        return deliveryService.deliverOrder(orderId);
-    }
-
-    public void notifyCustomer() {
-        deliveryService.notifyCustomer();
-    }
-
+    //find and assign a driver to order
     @PostMapping("/assign")
-    public ResponseEntity<Void> assignDelivery(@RequestBody OrderDTO orderDetails) {
-        // Logic to assign a driver and update order status
-        Driver assignedDriver = deliveryService.assignDeliveryDriver(orderDetails);
-
-
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> assignDriver(@RequestBody OrderDTO orderData) {
+        return deliveryService.assignDriver(orderData);
     }
+
+
+
+//    @PostMapping("/assign")
+//    public ResponseEntity<Void> assignDelivery(@RequestBody OrderDTO orderDetails) {
+//        // Logic to assign a driver and update order status
+//        Driver assignedDriver = deliveryService.assignDeliveryDriver(orderDetails);
+//
+//
+//        return ResponseEntity.ok().build();
+//    }
 
     //findDriverSessionByDriverId
     // public WebSocketSession getSessionByDriverId(String driverId) {
