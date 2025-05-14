@@ -34,6 +34,7 @@ public class OrderService {
 
     public ResponseEntity<List<Order>> getAllOrders() {
         try {
+            System.out.println("Fetching all orders");
             return new ResponseEntity<>(orderRepository.findAll(), HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
@@ -45,6 +46,9 @@ public class OrderService {
 
     public ResponseEntity<?> addOrder(Order order) {
         try {
+
+            System.out.println("Adding order: " + order);
+
             // Set initial status
             order.setOrderStatus(OrderStatus.PENDING);
 
