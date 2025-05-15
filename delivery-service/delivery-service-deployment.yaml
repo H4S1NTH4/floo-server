@@ -18,6 +18,12 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8085
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_URI
 
 ---
 apiVersion: v1
