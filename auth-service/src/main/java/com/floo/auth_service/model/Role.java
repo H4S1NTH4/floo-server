@@ -1,7 +1,7 @@
 package com.floo.auth_service.model;
 
 public enum Role {
-    USER,
+    CUSTOMER,
     ADMIN,
     RIDER,
     RESTAURANT_MANAGER,

@@ -30,8 +30,6 @@ public class User {
     private Profile profile;
     private DriverProfile driverProfile;
     private RestaurantProfile restaurantProfile;
-    private AdminProfile adminProfile;
-
 
     @CreatedDate
     private LocalDateTime createdAt;
