@@ -1,6 +1,7 @@
 package com.floo.restaurant_service.dto;
 
 import com.floo.restaurant_service.model.Address;
+import com.floo.restaurant_service.model.Order;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +22,7 @@ public class OrderDto {
     private String userId;
     private List<OrderItemDto> items;
     private BigDecimal totalPrice;
-    private String status;
+    private Order.OrderStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Address deliveryAddress;

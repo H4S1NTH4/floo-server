@@ -28,6 +28,7 @@ public class Restaurant {
     private OwnerInfo owner;
     private boolean isAvailable = true;
     private boolean isVerified = false;
+    private List<Feedback> feedbacks = new ArrayList<>();
 
     @Builder.Default
     private RestaurantStatus status = RestaurantStatus.OPEN; // OPEN, CLOSED, BUSY

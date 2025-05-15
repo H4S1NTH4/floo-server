@@ -19,5 +19,6 @@ public class MenuItemDto {
     private BigDecimal price;
     private Binary icon;
     private Integer quantity;
+    private String category;
     private String restaurantId;
 }
