@@ -163,14 +163,6 @@ public class DeliveryService {
         }
     }
 
-    /**
-     * Updates the information of an existing driver.
-     * Can update name, availability. Location is typically updated via WebSocket.
-     *
-     * @param driverId      The ID of the driver to update.
-     * @param driverDetails The driver object with updated details.
-     * @return ResponseEntity with the updated driver or an error message.
-     */
     public ResponseEntity<?> updateDriverInfo(String driverId, Driver driverDetails) {
         Optional<Driver> driverOptional = driverRepository.findById(driverId);
         if (driverOptional.isPresent()) {
@@ -200,12 +192,6 @@ public class DeliveryService {
         }
     }
 
-    /**
-     * Deletes a driver by their ID.
-     *
-     * @param driverId The ID of the driver to delete.
-     * @return ResponseEntity indicating success or failure.
-     */
     public ResponseEntity<?> deleteDriver(String driverId) {
         if (driverRepository.existsById(driverId)) {
             driverRepository.deleteById(driverId);
@@ -215,12 +201,6 @@ public class DeliveryService {
         }
     }
 
-    /**
-     * Gets a driver by their ID.
-     *
-     * @param driverId The ID of the driver to retrieve.
-     * @return ResponseEntity with the driver data or a not found message.
-     */
     public ResponseEntity<?> getDriverById(String driverId) {
         Optional<Driver> driverOptional = driverRepository.findById(driverId);
         if (driverOptional.isPresent()) {
@@ -230,10 +210,6 @@ public class DeliveryService {
         }
     }
 
-    /**
-     * Gets all drivers.
-     * @return ResponseEntity with a list of all drivers.
-     */
     public ResponseEntity<?> getAllDrivers() {
         try {
             List<Driver> drivers = driverRepository.findAll();
@@ -245,6 +221,13 @@ public class DeliveryService {
             // Log error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving drivers: " + e.getMessage());
         }
+    }
+    public GeoLocation getDriverLocationById(String driverId) {
+        Optional<Driver> optionalDriver = driverRepository.findById(driverId);
+        if (optionalDriver.isPresent()) {
+            return optionalDriver.get().getDriverLocation();
+        }
+        return null; // or throw custom NotFoundException
     }
 
 

@@ -3,6 +3,7 @@ package com.floo.delivery_service.Controller;
 import com.floo.delivery_service.dto.OrderDTO;
 import com.floo.delivery_service.entity.Driver;
 import com.floo.delivery_service.entity.DriverStatus;
+import com.floo.delivery_service.entity.GeoLocation;
 import com.floo.delivery_service.service.DeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,17 @@ public class DeliveryController {
     public ResponseEntity<?> assignDriver(@RequestBody OrderDTO orderData) {
         return deliveryService.assignDriver(orderData);
     }
+
+    @GetMapping("/driver/{driverId}/location")
+    public ResponseEntity<?> getDriverLocation(@PathVariable String driverId) {
+        GeoLocation location = deliveryService.getDriverLocationById(driverId);
+        if (location != null && location.getLatitude() != null && location.getLongitude() != null) {
+            return ResponseEntity.ok(location);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 
 
   //get all drivers
