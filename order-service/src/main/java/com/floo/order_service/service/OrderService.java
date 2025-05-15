@@ -1,5 +1,6 @@
 package com.floo.order_service.service;
 
+import com.floo.order_service.dto.OrderAddResponse;
 import com.floo.order_service.dto.OrderNotificationDto;
 import com.floo.order_service.dto.OrderUpdateResponse;
 import com.floo.order_service.feign.DeliveryInterface;
@@ -33,6 +34,7 @@ public class OrderService {
 
     public ResponseEntity<List<Order>> getAllOrders() {
         try {
+            System.out.println("Fetching all orders");
             return new ResponseEntity<>(orderRepository.findAll(), HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
@@ -42,8 +44,11 @@ public class OrderService {
         return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
     }
 
-    public ResponseEntity<String> addOrder(Order order) {
+    public ResponseEntity<?> addOrder(Order order) {
         try {
+
+            System.out.println("Adding order: " + order);
+
             // Set initial status
             order.setOrderStatus(OrderStatus.PENDING);
 
@@ -54,19 +59,20 @@ public class OrderService {
             // Save order to DB
             Order savedOrder = orderRepository.save(order);
 
-            // Notify restaurant service
-            OrderNotificationDto notification = new OrderNotificationDto(
-                    savedOrder.getId(),
-                    savedOrder.getOrderStatus().name(),
-                    savedOrder.getCustomerId(),
-                    savedOrder.getRestaurantId(),
-                    savedOrder.getDeliveryAddress(),
-                    System.currentTimeMillis()
-            );
+//            // Notify restaurant service
+//            OrderNotificationDto notification = new OrderNotificationDto(
+//                    savedOrder.getId(),
+//                    savedOrder.getOrderStatus().name(),
+//                    savedOrder.getCustomerId(),
+//                    savedOrder.getRestaurantId(),
+//                    savedOrder.getDeliveryAddress(),
+//                    System.currentTimeMillis()
+//            );
+//
+//            restaurantInterface.notifyRestaurant(notification);
 
-            restaurantInterface.notifyRestaurant(order.getRestaurantId(), notification);
+            return new ResponseEntity<>(new OrderAddResponse("Order created and restaurant notified successfully", order), HttpStatus.CREATED);
 
-            return new ResponseEntity<>("Order created and restaurant notified successfully", HttpStatus.CREATED);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>("Order creation failed", HttpStatus.BAD_REQUEST);
@@ -128,29 +134,43 @@ public class OrderService {
             existingOrder.setOrderStatus(newStatus);
             Order savedOrder = orderRepository.save(existingOrder);
 
+            // If status is READY, notify delivery service
+//            if (newStatus == OrderStatus.READY) {
+//                try {
+//                    ResponseEntity<String> deliveryResponse = deliveryInterface.testDeliveryService();
+//                    // Optional: Handle delivery service response if needed
+//                } catch (Exception e) {
+//                    // Log error but continue with status update
+//                    System.err.println("Failed to notify delivery service: " + e.getMessage());
+//                    // Consider implementing retry logic or queue mechanism
+//                }
+//            }
+
             // Create notification payload
             OrderNotificationDto notification = new OrderNotificationDto(
                     savedOrder.getId(),
                     newStatus.name(),
                     savedOrder.getCustomerId(),
-                    existingOrder.getRestaurantId(),  // Ensure restaurantId comes from existingOrder
+                    savedOrder.getRestaurantId(),
                     savedOrder.getDeliveryAddress(),
                     System.currentTimeMillis()
             );
 
-            String restaurantId = existingOrder.getRestaurantId();
+//            // Notify restaurant if relevant
+//            if (newStatus == OrderStatus.PENDING ||
+//                    newStatus == OrderStatus.ACCEPTED ||
+//                    newStatus == OrderStatus.DENIED ||
+//                    newStatus == OrderStatus.PREPARING ||
+//                    newStatus == OrderStatus.READY) {
+//                restaurantInterface.notifyRestaurant(notification);
+//            }
 
-            // Notify restaurant if relevant
-            if (newStatus == OrderStatus.PENDING) {
-                restaurantInterface.notifyRestaurant(restaurantId,notification);
-            }
-
-            // Notify delivery service if relevant
-            if (newStatus == OrderStatus.READY ||
-                    newStatus == OrderStatus.OUT_FOR_DELIVERY ||
-                    newStatus == OrderStatus.DELIVERING) {
-                deliveryInterface.notifyDelivery(notification);
-            }
+//            // Notify delivery service if relevant
+//            if (newStatus == OrderStatus.ACCEPTED ||
+//                    newStatus == OrderStatus.READY ||
+//                    newStatus == OrderStatus.PICKED_UP) {
+//                deliveryInterface.notifyDelivery(notification);
+//            }
 
             return new ResponseEntity<>(
                     new OrderUpdateResponse("Order status updated successfully", savedOrder),
@@ -161,7 +181,6 @@ public class OrderService {
             return new ResponseEntity<>("Failed to update order status", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     public ResponseEntity<?> getOrderById(String orderId) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);

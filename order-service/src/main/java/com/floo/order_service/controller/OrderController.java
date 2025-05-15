@@ -18,7 +18,7 @@ public class OrderController {
     OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<String> createOrder(@RequestBody Order order) {
+    public ResponseEntity<?> createOrder(@RequestBody Order order) {
 
         return orderService.addOrder(order);
 
@@ -27,6 +27,7 @@ public class OrderController {
     @GetMapping("/allOrders")
     public ResponseEntity<List<Order>> getAllOrders() {
         // get all orders
+
         return orderService.getAllOrders();
     }
 
