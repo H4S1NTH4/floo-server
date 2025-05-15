@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface DriverRepository extends MongoRepository<Driver, String> {
     List<Driver> findByStatusAndAvailable(DriverStatus status, Boolean available);
+    List<Driver> findByStatus(DriverStatus status);
+    Driver findBestDriverByStatus(DriverStatus status);
 }

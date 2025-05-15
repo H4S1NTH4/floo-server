@@ -1,13 +1,9 @@
 package com.floo.delivery_service.entity;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.floo.delivery_service.dto.DriverWsPayload;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import javax.xml.stream.Location;
 
 @Document(collection = "driver")
 public class Driver {
@@ -16,13 +12,13 @@ public class Driver {
     private String name;
     private DriverStatus status;
     private Boolean available;
-    private DriverLocation driverLocation;
+    private GeoLocation driverLocation;
 
 
     // Default constructor - Jackson and JPA/Mongo might still need this for some operations
     public Driver() {
         // Initialize driverLocation to avoid NullPointerException if accessed before being set
-        this.driverLocation = new DriverLocation();
+        this.driverLocation = new GeoLocation();
     }
 
 
@@ -31,7 +27,7 @@ public class Driver {
 
 
 
-    public Driver(String name, DriverLocation driverLocation, DriverStatus status,Boolean available) {
+    public Driver(String name, GeoLocation driverLocation, DriverStatus status, Boolean available) {
         this.name = name;
         this.driverLocation = driverLocation;
         this.status = status;
@@ -60,7 +56,7 @@ public class Driver {
         this.name = name;
     }
 
-    public DriverLocation getDriverLocation() {
+    public GeoLocation getDriverLocation() {
         return driverLocation;
     }
 
@@ -98,8 +94,8 @@ public class Driver {
         this.available = available;
     }
 
-    public void setDriverLocation(DriverLocation driverLocation) {
-        this.driverLocation = driverLocation;
+    public void setDriverLocation(GeoLocation geoLocation) {
+        this.driverLocation = geoLocation;
     }
 }
 

@@ -1,7 +1,7 @@
 package com.floo.delivery_service.service;
 import com.floo.delivery_service.dto.OrderDTO;
 import com.floo.delivery_service.entity.Driver;
-import com.floo.delivery_service.entity.DriverLocation;
+import com.floo.delivery_service.entity.GeoLocation;
 import com.floo.delivery_service.entity.DriverStatus;
 import com.floo.delivery_service.repository.DriverRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,109 +21,106 @@ public class DeliveryService {
 
     public ResponseEntity<?> assignDriver(OrderDTO orderData) {
         Driver driver = findDriver(orderData);
-        return new ResponseEntity<>( HttpStatus.OK);
+
+        if(driver==null){
+            return ResponseEntity.ok("no drivers at the moment");
+        }
+        driver.setStatus(DriverStatus.DELIVERY);
+        driverRepository.save(driver);
+        return ResponseEntity.ok(driver);
     //get next action
     }
 
-
-    //find delivery driver to the order
-//    public Driver findDriver(OrderDTO orderDetails){
-//        for (WebSocketSession session : DriverWebSocketHandler.driverSessions.values()) {
-//            Driver driver = (Driver) session.getAttributes().get("driver");
-//            if (driver != null && driver.getStatus() == DriverStatus.ONLINE) {
-//                return driver;
-//            }
-//        }
-//        return null; // No available driver
-//    }
     public Driver findDriver(OrderDTO orderDetails) {
         if (orderDetails == null || orderDetails.getPickupLocation() == null) {
             System.err.println("Order details or pickup location is missing. Cannot find a driver.");
-            // Consider throwing new IllegalArgumentException("Order details or pickup location cannot be null.");
+            // Consider throwing: throw new IllegalArgumentException("Order details or pickup location cannot be null.");
             return null;
         }
 
-        DriverLocation orderPickupLocation = orderDetails.getPickupLocation();
+        GeoLocation orderPickupLocation = orderDetails.getPickupLocation();
         Driver bestDriver = null;
         double minDistance = Double.MAX_VALUE;
 
-        // Iterate over all active driver sessions
-        // (Assuming OFFLINE drivers are already removed from driverSessions)
-        for (WebSocketSession session : DriverWebSocketHandler.driverSessions.values()) {
-            Driver driver = (Driver) session.getAttributes().get("driver");
+        // 1. Fetch ONLINE drivers from the database
+        List<Driver> onlineDrivers;
+        try {
+            onlineDrivers = driverRepository.findByStatus(DriverStatus.ONLINE); // Assuming a method like this exists in your repository
+        } catch (Exception e) {
+            System.err.println("Error fetching drivers from database: " + e.getMessage());
+            // Depending on the error, you might want to throw a custom exception or return null
+            return null;
+        }
 
-            if (driver == null) {
-                // This indicates an issue with session setup or cleanup.
-                System.err.println("Null driver object found in session attributes for session ID: " + session.getId());
-                continue;
-            }
 
-            // A driver is considered available if they are ONLINE.
-            // The canFulfillOrder method can include other checks like vehicle type, c apacity, etc.
-            if (driver.getStatus() == DriverStatus.ONLINE ) {
-                DriverLocation driverLocation = driver.getDriverLocation(); // Assumes Driver has getCurrentLocation()
+        if (onlineDrivers.isEmpty()) {
+            System.out.println("No drivers are currently ONLINE.");
+            return null;
+        }
 
-                if (driverLocation != null) {
-                    double distance = calculateDistance(orderPickupLocation, driverLocation);
+        System.out.println("Found " + onlineDrivers.size() + " ONLINE drivers. Evaluating for order...");
 
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        bestDriver = driver;
-                    }
-                } else {
-                    // Log if a driver is ONLINE but has no location data, if location is expected
-                    System.out.println("Driver " + driver.getDriverId() + " is ONLINE but has no current location.");
+        // 2. Iterate over the ONLINE drivers fetched from the DB
+        for (Driver driver : onlineDrivers) {
+
+            GeoLocation driverLocation = driver.getDriverLocation(); // Assumes Driver entity has getDriverLocation()
+            System.out.println("Driver location: " + driverLocation + driverLocation.getLongitude() + driverLocation.getLatitude());
+
+            if (driverLocation != null &&
+                    driverLocation.getLatitude() != null &&  // Check if the Double object itself is null
+                    driverLocation.getLongitude() != null) {
+                double distance = calculateDistance(orderPickupLocation, driverLocation);
+                System.out.println("Calculated distance: " + distance);
+
+                System.out.println("Evaluating Driver ID: " + driver.getDriverId() + " at distance: " + distance + " units. Status: " + driver.getStatus());
+
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    bestDriver = driver;
+
                 }
+            } else {
+                System.out.println("Driver " + driver.getDriverId() + " (Status: " + driver.getStatus() + ") is ONLINE but has no valid current location in the database.");
             }
         }
 
         if (bestDriver != null) {
             System.out.println("Found best driver: " + bestDriver.getDriverId() + " (Status: " + bestDriver.getStatus() + ") at distance: " + minDistance + " units.");
-            // IMPORTANT: After selecting a driver, you should update their status
-            // to indicate they are now assigned or busy with this order, e.g., DriverStatus.DELIVERY.
-            // This typically involves:
-            // 1. bestDriver.setStatus(DriverStatus.DELIVERY);
-            // 2. Persisting this change: driverRepository.save(bestDriver);
-            // 3. Potentially notifying the driver via WebSocket.
-            // This logic should be handled carefully to prevent race conditions if multiple orders
-            // are being assigned simultaneously.
+
         } else {
-            System.out.println("No suitable driver (ONLINE and able to fulfill) found for the order at this time.");
+            System.out.println("No suitable driver (ONLINE with location and able to fulfill) found for the order at this time.");
         }
 
         return bestDriver;
     }
 
-    /**
-     * Helper method to calculate the distance between two locations.
-     * Replace with your actual distance calculation logic (e.g., Haversine formula for lat/long).
-     */
-    private double calculateDistance(DriverLocation loc1, DriverLocation loc2) {
+    private double calculateDistance(GeoLocation loc1, GeoLocation loc2) {
         if (loc1 == null || loc2 == null) {
             return Double.MAX_VALUE;
         }
         // This is a placeholder. Use a real geospatial distance calculation.
         // Example for latitude and longitude:
-        // final int R = 6371; // Radius of the earth in km
-        // double latDistance = Math.toRadians(loc2.getLatitude() - loc1.getLatitude());
-        // double lonDistance = Math.toRadians(loc2.getLongitude() - loc1.getLongitude());
-        // double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-        //         + Math.cos(Math.toRadians(loc1.getLatitude())) * Math.cos(Math.toRadians(loc2.getLatitude()))
-        //         * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        // double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        // return R * c; // distance in km
+//         final int R = 6371; // Radius of the earth in km
+//         double latDistance = Math.toRadians(loc2.getLatitude() - loc1.getLatitude());
+//         double lonDistance = Math.toRadians(loc2.getLongitude() - loc1.getLongitude());
+//         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+//                 + Math.cos(Math.toRadians(loc1.getLatitude())) * Math.cos(Math.toRadians(loc2.getLatitude()))
+//                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+//         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+//         return R * c; // distance in km
 
-        // Simplified Cartesian distance for example purposes:
-//        double dx = loc1.getLongitude() - loc2.getLongitude();
-//        double dy = loc1.getLatitude() - loc2.getLatitude();
-//        return Math.sqrt(dx * dx + dy * dy);
-        return 0.0;
+         //Simplified Cartesian distance for example purposes:
+        double dx = loc1.getLongitude() - loc2.getLongitude();
+        double dy = loc1.getLatitude() - loc2.getLatitude();
+        return Math.sqrt(dx * dx + dy * dy);
+       // return 0.0;
     }
     public ResponseEntity<?> createDriver(Driver driver) {
         try {
             // Ensure driver location is initialized if not provided
             if (driver.getDriverLocation() == null) {
-                driver.setDriverLocation(new DriverLocation(0.0, 0.0)); // Default location
+                driver.setDriverLocation(new GeoLocation(0.0, 0.0)); // Default location
             }
             // Set default status if not provided
             if (driver.getStatus() == null) {
@@ -250,4 +247,64 @@ public class DeliveryService {
         }
     }
 
+
 }
+
+
+
+//    public Driver findDriverFromWebSocketSessions(OrderDTO orderDetails) {
+//        if (orderDetails == null || orderDetails.getPickupLocation() == null) {
+//            System.err.println("Order details or pickup location is missing. Cannot find a driver.");
+//            // Consider throwing new IllegalArgumentException("Order details or pickup location cannot be null.");
+//            return null;
+//        }
+//
+//        GeoLocation orderPickupLocation = orderDetails.getPickupLocation();
+//        Driver bestDriver = null;
+//        double minDistance = Double.MAX_VALUE;
+//
+//        // Iterate over all active driver sessions
+//        // (Assuming OFFLINE drivers are already removed from driverSessions)
+//        for (WebSocketSession session : DriverWebSocketHandler.driverSessions.values()) {
+//            Driver driver = (Driver) session.getAttributes().get("driver");
+//
+//            if (driver == null) {
+//                // This indicates an issue with session setup or cleanup.
+//                System.err.println("Null driver object found in session attributes for session ID: " + session.getId());
+//                continue;
+//            }
+//
+//            // A driver is considered available if they are ONLINE.
+//            if (driver.getStatus() == DriverStatus.ONLINE ) {
+//                GeoLocation geoLocation = driver.getDriverLocation(); // Assumes Driver has getCurrentLocation()
+//
+//                if (geoLocation != null) {
+//                    double distance = calculateDistance(orderPickupLocation, geoLocation);
+//
+//                    if (distance < minDistance) {
+//                        minDistance = distance;
+//                        bestDriver = driver;
+//                    }
+//                } else {
+//                    // Log if a driver is ONLINE but has no location data, if location is expected
+//                    System.out.println("Driver " + driver.getDriverId() + " is ONLINE but has no current location.");
+//                }
+//            }
+//        }
+//
+//        if (bestDriver != null) {
+//            System.out.println("Found best driver: " + bestDriver.getDriverId() + " (Status: " + bestDriver.getStatus() + ") at distance: " + minDistance + " units.");
+//            // IMPORTANT: After selecting a driver, you should update their status
+//            // to indicate they are now assigned or busy with this order, e.g., DriverStatus.DELIVERY.
+//            // This typically involves:
+//            // 1. bestDriver.setStatus(DriverStatus.DELIVERY);
+//            // 2. Persisting this change: driverRepository.save(bestDriver);
+//            // 3. Potentially notifying the driver via WebSocket.
+//            // This logic should be handled carefully to prevent race conditions if multiple orders
+//            // are being assigned simultaneously.
+//        } else {
+//            System.out.println("No suitable driver (ONLINE and able to fulfill) found for the order at this time.");
+//        }
+//
+//        return bestDriver;
+//    }

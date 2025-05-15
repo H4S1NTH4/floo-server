@@ -32,36 +32,13 @@ public class DeliveryController {
     }
 
 
-
-    //findDriverSessionByDriverId
-    // public WebSocketSession getSessionByDriverId(String driverId) {
-    //    return driverSessions.get(driverId);
-    //}
-
-    //TODO
-    //create Driver
-
-    //Update driver status (OFFLINE, ONLINE, DELIVERY)
-
-    //Update driver info
-
-    //Delete Driver
-
-    //Get driver by id
-
-    //
+  //get all drivers
     @PostMapping("/drivers")
     public ResponseEntity<?> createDriver(@RequestBody Driver driver) {
         return deliveryService.createDriver(driver);
     }
 
-    /**
-     * Updates the status of an existing driver.
-     *
-     * @param driverId The ID of the driver to update.
-     * @param payload  A map containing the new status, e.g., {"status": "ONLINE"}.
-     * @return ResponseEntity with the updated driver or an error message.
-     */
+    //Updates the status of an existing driver.
     @PutMapping("/drivers/{driverId}/status")
     public ResponseEntity<?> updateDriverStatus(@PathVariable String driverId, @RequestBody Map<String, String> payload) {
         String statusStr = payload.get("status");

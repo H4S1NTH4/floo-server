@@ -1,16 +1,15 @@
 package com.floo.delivery_service.dto;
 
-import com.floo.delivery_service.entity.DriverLocation;
+import com.floo.delivery_service.entity.GeoLocation;
 
-import javax.xml.stream.Location;
 import java.util.List;
 
 public class OrderDTO {
     private Long id;
     private Long customerId;
     private String customerName; // optional but useful for delivery
-    private Location deliveryLocation;
-    private DriverLocation pickupLocation;
+    private GeoLocation deliveryLocation;
+    private GeoLocation pickupLocation;
     private String status; // e.g., PENDING, PREPARING, OUT_FOR_DELIVERY, DELIVERED
     private Double totalAmount;
     private String createdAt;
@@ -41,11 +40,11 @@ public class OrderDTO {
         this.customerName = customerName;
     }
 
-    public Location getDeliveryLocation() {
+    public GeoLocation getDeliveryLocation() {
         return deliveryLocation;
     }
 
-    public void setDeliveryLocation(Location deliveryLocation) {
+    public void setDeliveryLocation(GeoLocation deliveryLocation) {
         this.deliveryLocation = deliveryLocation;
     }
 
@@ -81,11 +80,11 @@ public class OrderDTO {
         this.items = items;
     }
 
-    public DriverLocation getPickupLocation() {
+    public GeoLocation getPickupLocation() {
         return pickupLocation;
     }
 
-    public void setPickupLocation(DriverLocation pickupLocation) {
+    public void setPickupLocation(GeoLocation pickupLocation) {
         this.pickupLocation = pickupLocation;
     }
 }
