@@ -27,6 +27,10 @@ public class User {
     private String password;
     private Role role;
 
+    private Profile profile;
+    private DriverProfile driverProfile;
+    private RestaurantProfile restaurantProfile;
+
     @CreatedDate
     private LocalDateTime createdAt;
 

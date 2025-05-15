@@ -1,5 +1,9 @@
 package com.floo.auth_service.dto;
 
+import com.floo.auth_service.model.Profile;
+import com.floo.auth_service.model.DriverProfile;
+import com.floo.auth_service.model.RestaurantProfile;
+import com.floo.auth_service.model.Role;
 import lombok.*;
 
 @Data
@@ -7,5 +11,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class AuthResponse {
-    private String token;
+    private String accessToken;
+    private String refreshToken;
+    private UserDto user;
+
 }
