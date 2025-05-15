@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: delivery-service
-          image: delivery-service:latest
+          image: delivery-service:latestxy
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8085
