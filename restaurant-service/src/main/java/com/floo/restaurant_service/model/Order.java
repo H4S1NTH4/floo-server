@@ -25,9 +25,15 @@ public class Order {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Address deliveryAddress;
+    private PaymentStatus paymentStatus; // PENDING, COMPLETED, FAILED
+    private String driverId;
 
     public enum OrderStatus {
         RECEIVED, PREPARING, FINISHED, PACKING, READY_FOR_PICKUP, PICKED_UP, DELIVERED
+    }
+
+    public enum PaymentStatus {
+        PENDING, COMPLETED, FAILED
     }
 }
 

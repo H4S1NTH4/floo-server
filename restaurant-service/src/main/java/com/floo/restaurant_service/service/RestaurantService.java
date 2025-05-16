@@ -1,12 +1,12 @@
 package com.floo.restaurant_service.service;
 
-import com.floo.restaurant_service.controller.RestaurantController;
 import com.floo.restaurant_service.dto.*;
 import com.floo.restaurant_service.feign.DeliveryServiceClient;
-import com.floo.restaurant_service.feign.OrderServiceClient;
+import com.floo.restaurant_service.feign.NotificationClient;
 import com.floo.restaurant_service.model.*;
 import com.floo.restaurant_service.repository.MenuItemRepository;
 import com.floo.restaurant_service.repository.RestaurantRepository;
+import com.floo.restaurant_service.utils.NotificationRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,6 +31,7 @@ public class RestaurantService {
     private MenuItemRepository menuItemRepository;
 
     private final DeliveryServiceClient deliveryServiceClient;
+    private final NotificationClient notificationClient;
     private static final Logger logger = (Logger) LoggerFactory.getLogger(RestaurantService.class);
 
     // create new restaurant
