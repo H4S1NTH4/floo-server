@@ -65,6 +65,12 @@ public class OrderController {
         return orderService.getOrderById(orderId);
     }
 
+    //getOrders (order number)
+    @GetMapping("/number/{orderNumber}")
+    public ResponseEntity<?> getOrderByOrderNumber(@PathVariable Long orderNumber) {
+        return orderService.getOrderByOrderNumber(orderNumber);
+    }
+
     // customer client
     //getOrders (customer id)
     @GetMapping("/customer/{customerId}")
