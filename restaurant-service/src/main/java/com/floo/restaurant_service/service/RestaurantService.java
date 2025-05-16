@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -372,5 +373,42 @@ public class RestaurantService {
         restaurantRepository.save(restaurant);
 
         return "Order added to restaurant successfully";
+    }
+
+    // check if order exists
+    public boolean orderExists(String restaurantId, String orderId) {
+        return restaurantRepository.findById(restaurantId)
+                .map(restaurant ->
+                        restaurant.getActiveOrders().stream().anyMatch(o -> o.getOrderId().equals(orderId)) ||
+                                restaurant.getPastOrders().stream().anyMatch(o -> o.getOrderId().equals(orderId))
+                )
+                .orElse(false);
+    }
+
+    // update order payment status
+    @Transactional
+    public void updateOrderPaymentStatus(String restaurantId, String orderId, Order.PaymentStatus status) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+
+        Optional<Order> orderOpt = restaurant.getActiveOrders().stream()
+                .filter(o -> o.getOrderId().equals(orderId))
+                .findFirst();
+
+        if (orderOpt.isPresent()) {
+            Order order = orderOpt.get();
+            order.setPaymentStatus(status);
+            restaurantRepository.save(restaurant);
+        } else {
+            throw new RuntimeException("Order not found");
+        }
+    }
+
+    // get restaurant owner
+    public String getRestaurantOwner(String restaurantId) {
+        return restaurantRepository.findById(restaurantId)
+                .map(Restaurant::getOwner)
+                .map(OwnerInfo::getUsername)
+                .orElseThrow(() -> new RuntimeException("Restaurant not found"));
     }
 }
