@@ -1,16 +1,24 @@
 package com.floo.restaurant_service.handler;
 
+import com.floo.restaurant_service.feign.NotificationClient;
 import com.floo.restaurant_service.feign.PaymentServiceClient;
+import com.floo.restaurant_service.model.MenuItem;
 import com.floo.restaurant_service.model.Order;
 import com.floo.restaurant_service.model.OrderItem;
 import com.floo.restaurant_service.model.Restaurant;
 import com.floo.restaurant_service.service.RestaurantService;
+import com.floo.restaurant_service.service.MenuItemService;
+import com.floo.restaurant_service.utils.NotificationRequest;
 import com.floo.restaurant_service.utils.OrderPlacedNotification;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -18,35 +26,34 @@ import java.util.stream.Collectors;
 public class OrderNotificationHandler {
     private final RestaurantService restaurantService;
     private final PaymentServiceClient paymentServiceClient;
+    private final MenuItemService menuItemService;
+    private final NotificationClient notificationClient;
     private static final Logger logger = LoggerFactory.getLogger(OrderNotificationHandler.class);
 
     public void handleOrderNotification(OrderPlacedNotification notification) {
-        if (restaurantService.getRestaurant(notification.getRestaurantId())
-                .getRestaurantDto()
-                .getActiveOrders()
-                .stream()
-                .anyMatch(o -> o.getOrderId().equals(notification.getOrderId()))) {
+        // Check if order already exists
+        if (restaurantService.orderExists(notification.getRestaurantId(), notification.getOrderId())) {
             logger.warn("Order {} already exists", notification.getOrderId());
             return;
         }
 
+        // Fetch menu items to calculate total price
+        List<MenuItem> menuItems = menuItemService.getMenuItemsByIds(notification.getMenuItemIds());
+        BigDecimal totalPrice = calculateTotalPrice(menuItems, notification.getMenuItemQuantities());
+
+        // Build order
         Order order = Order.builder()
                 .orderId(notification.getOrderId())
                 .userId(notification.getUserId())
-                .items(notification.getMenuItemIds().stream()
-                        .map(id -> OrderItem.builder()
-                                .menuItemId(id)
-                                .quantity(notification.getMenuItemQuantities().get(
-                                        notification.getMenuItemIds().indexOf(id)))
-                                .build())
-                        .collect(Collectors.toList()))
+                .items(mapToOrderItems(notification, menuItems))
+                .totalPrice(totalPrice.doubleValue())
                 .deliveryAddress(notification.getOrderAddress())
-                .paymentStatus(Order.PaymentStatus.PENDING)
+                .status(Order.OrderStatus.RECEIVED)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
-        // Calculate total price would require fetching menu items
-        // For now, we'll set it to 0 and update later
-        // Get payment status
+        // Verify payment status
         try {
             Order.PaymentStatus status = paymentServiceClient.getPaymentStatus(order.getOrderId());
             order.setPaymentStatus(status);
@@ -55,6 +62,38 @@ public class OrderNotificationHandler {
             order.setPaymentStatus(Order.PaymentStatus.PENDING);
         }
 
+        // Add order to restaurant
         restaurantService.addOrderToRestaurant(notification.getRestaurantId(), order);
+
+        // Notify restaurant
+        notificationClient.sendNotification(
+                NotificationRequest.builder()
+                        .receiverUsername(restaurantService.getRestaurantOwner(notification.getRestaurantId()))
+                        .title("New Order Received")
+                        .message(String.format("New order #%s received", notification.getOrderId()))
+                        .build()
+        );
+    }
+
+    private BigDecimal calculateTotalPrice(List<MenuItem> menuItems, List<Integer> quantities) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (int i = 0; i < menuItems.size(); i++) {
+            total = total.add(menuItems.get(i).getPrice().multiply(BigDecimal.valueOf(quantities.get(i))));
+        }
+        return total;
+    }
+
+    private List<OrderItem> mapToOrderItems(OrderPlacedNotification notification, List<MenuItem> menuItems) {
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (int i = 0; i < menuItems.size(); i++) {
+            MenuItem item = menuItems.get(i);
+            orderItems.add(OrderItem.builder()
+                    .menuItemId(item.getId())
+                    .name(item.getName())
+                    .quantity(notification.getMenuItemQuantities().get(i))
+                    .price(item.getPrice())
+                    .build());
+        }
+        return orderItems;
     }
 }
