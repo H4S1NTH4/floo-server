@@ -16,5 +16,4 @@ public class OrderItem {
     private String name;
     private Integer quantity;
     private BigDecimal price;
-
 }

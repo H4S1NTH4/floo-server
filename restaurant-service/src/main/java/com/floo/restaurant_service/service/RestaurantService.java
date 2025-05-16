@@ -30,15 +30,10 @@ public class RestaurantService {
     @Autowired
     private MenuItemRepository menuItemRepository;
 
-    @Autowired
-    private WebClient.Builder webClientBuilder;
-
-    private final OrderServiceClient orderServiceClient;
     private final DeliveryServiceClient deliveryServiceClient;
     private static final Logger logger = (Logger) LoggerFactory.getLogger(RestaurantService.class);
-    private final String ROLE = "RESTAURANT_OWNER";
-    private final String ADMIN_ROLE = "ADMIN";
 
+    // create new restaurant
     public String addRestaurant(RestaurantRequest request) {
         Restaurant restaurant = Restaurant.builder()
                 .name(request.getName())
@@ -54,6 +49,7 @@ public class RestaurantService {
         return "Restaurant with id: " + saved.getId() + " added successfully";
     }
 
+    // get my restaurant
     public RestaurantResponse getRestaurant(String id) {
         return restaurantRepository.findById(id)
                 .map(restaurant -> RestaurantResponse.builder()
@@ -67,6 +63,7 @@ public class RestaurantService {
                         .build());
     }
 
+    // get all restaurants by admin
     @Transactional(readOnly = true)
     public List<RestaurantDto> getAllRestaurants() {
         logger.info("Fetching all restaurants for admin view");
@@ -75,6 +72,7 @@ public class RestaurantService {
                 .collect(Collectors.toList());
     }
 
+    // update the restaurant
     public String updateRestaurant(String id, RestaurantRequest request) {
         return restaurantRepository.findById(id)
                 .map(restaurant -> {
@@ -89,6 +87,7 @@ public class RestaurantService {
                 .orElse("Restaurant not found");
     }
 
+    // update restaurant availability status
     @Transactional
     public String updateRestaurantStatus(String id, Restaurant.RestaurantStatus status) {
         Restaurant restaurant = restaurantRepository.findById(id)
@@ -101,6 +100,7 @@ public class RestaurantService {
         return String.format("Restaurant status updated to %s", status);
     }
 
+    // get pending restaurant (admin)
     @Transactional(readOnly = true)
     public List<RestaurantDto> getPendingRestaurants() {
         return restaurantRepository.findByIsVerifiedFalse().stream()
@@ -108,6 +108,7 @@ public class RestaurantService {
                 .collect(Collectors.toList());
     }
 
+    // verify restaurant (admin)
     public String verifyRestaurant(String id, boolean isApproved) {
         return restaurantRepository.findById(id)
                 .map(restaurant -> {
@@ -123,6 +124,7 @@ public class RestaurantService {
                 .orElse("Restaurant not found");
     }
 
+    // restaurant to dto
     private RestaurantDto getRestaurantDto(Restaurant restaurant) {
         RestaurantDto dto = RestaurantDto.builder()
                 .id(restaurant.getId())
@@ -147,6 +149,7 @@ public class RestaurantService {
         return dto;
     }
 
+    // menu item to dto
     private MenuItemDto convertToMenuItemDto(MenuItem menuItem) {
         return MenuItemDto.builder()
                 .id(menuItem.getId())
@@ -159,12 +162,14 @@ public class RestaurantService {
                 .build();
     }
 
+    // orders to dto
     private List<OrderDto> convertToOrderDtos(List<Order> orders) {
         return orders.stream()
                 .map(this::convertToOrderDto)
                 .collect(Collectors.toList());
     }
 
+    // order to dto
     private OrderDto convertToOrderDto(Order order) {
         return OrderDto.builder()
                 .id(order.getId())
@@ -180,6 +185,7 @@ public class RestaurantService {
                 .build();
     }
 
+    // order items to dto
     private List<OrderItemDto> convertToOrderItemDtos(List<OrderItem> items) {
         return items.stream()
                 .map(item -> OrderItemDto.builder()
@@ -191,6 +197,7 @@ public class RestaurantService {
                 .collect(Collectors.toList());
     }
 
+    // order item to dto
     private OrderItemDto convertToOrderItemDto(OrderItem item) {
         return OrderItemDto.builder()
                 .menuItemId(item.getMenuItemId())
@@ -200,21 +207,7 @@ public class RestaurantService {
                 .build();
     }
 
-    @Transactional
-    public String addOrderToRestaurant(String restaurantId, Order order) {
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new RuntimeException("Restaurant not found"));
-
-        order.setStatus(Order.OrderStatus.RECEIVED);
-        order.setCreatedAt(LocalDateTime.now());
-        order.setUpdatedAt(LocalDateTime.now());
-
-        restaurant.getActiveOrders().add(order);
-        restaurantRepository.save(restaurant);
-
-        return "Order added to restaurant successfully";
-    }
-
+    // update order status
     @Transactional
     public String updateOrderStatus(String restaurantId, String orderId, Order.OrderStatus status) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
@@ -228,8 +221,21 @@ public class RestaurantService {
         order.setStatus(status);
         order.setUpdatedAt(LocalDateTime.now());
 
+        //notification to delivery person
         if (status == Order.OrderStatus.READY_FOR_PICKUP) {
             deliveryServiceClient.notifyDeliveryReady(order);
+        }
+
+        //notification to customer
+        if (status != Order.OrderStatus.READY_FOR_PICKUP) {
+            notificationClient.sendNotification(
+                    NotificationRequest.builder()
+                            .receiverUsername(order.getUserId()) // Assuming userId is username
+                            .title("Order Status Update")
+                            .message(String.format("Your order %s is now %s",
+                                    order.getOrderId(), status))
+                            .build()
+            );
         }
 
         if (status == Order.OrderStatus.PICKED_UP) {
@@ -241,10 +247,12 @@ public class RestaurantService {
         return "Order status updated successfully";
         }
 
+    // delete restaurant
     public void deleteRestaurant(String id) {
         restaurantRepository.deleteById(id);
     }
 
+    // get daily income
     public DailyIncomeResponse getDailyIncome(String restaurantId, LocalDate date) {
         List<Order> orders = restaurantRepository.findById(restaurantId)
                 .map(r -> r.getPastOrders().stream()
@@ -263,6 +271,7 @@ public class RestaurantService {
                 .build();
     }
 
+    // get total income
     public TotalIncomeResponse getTotalIncome(String restaurantId) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RuntimeException("Restaurant not found"));
@@ -277,6 +286,7 @@ public class RestaurantService {
                 .build();
     }
 
+    // add feedback
     public void addFeedback(String restaurantId, FeedbackRequest feedback) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RuntimeException("Restaurant not found"));
@@ -302,6 +312,7 @@ public class RestaurantService {
         restaurantRepository.save(restaurant);
     }
 
+    // active orders (preparing to ready to be picked up)
     public List<OrderDto> getInProgressOrders(String restaurantId) {
         return restaurantRepository.findById(restaurantId)
                 .map(r -> r.getActiveOrders().stream()
@@ -312,6 +323,7 @@ public class RestaurantService {
                 .orElseThrow(() -> new RuntimeException("Restaurant not found"));
     }
 
+    // get completed orders (order status = picked up)
     public List<OrderDto> getCompletedOrders(String restaurantId, LocalDate date) {
         return restaurantRepository.findById(restaurantId)
                 .map(r -> r.getPastOrders().stream()
@@ -321,6 +333,7 @@ public class RestaurantService {
                 .orElseThrow(() -> new RuntimeException("Restaurant not found"));
     }
 
+    // view an order
     public OrderDto getOrder(String restaurantId, String orderId) {
         return restaurantRepository.findById(restaurantId)
                 .flatMap(r -> r.getActiveOrders().stream()
@@ -335,6 +348,7 @@ public class RestaurantService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
     }
 
+    // get incoming orders
     public List<OrderDto> getActiveOrders(String restaurantId) {
         return restaurantRepository.findById(restaurantId)
                 .map(restaurant -> restaurant.getActiveOrders().stream()
@@ -343,9 +357,19 @@ public class RestaurantService {
                 .orElseThrow(() -> new RuntimeException("Restaurant not found"));
     }
 
-    public List<Order> getPastOrders(String restaurantId) {
-        return restaurantRepository.findById(restaurantId)
-                .map(Restaurant::getPastOrders)
+    // adding order to restaurant
+    @Transactional
+    public String addOrderToRestaurant(String restaurantId, Order order) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+
+        order.setStatus(Order.OrderStatus.RECEIVED);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+
+        restaurant.getActiveOrders().add(order);
+        restaurantRepository.save(restaurant);
+
+        return "Order added to restaurant successfully";
     }
 }
