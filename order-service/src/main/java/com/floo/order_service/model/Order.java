@@ -34,6 +34,7 @@ public class Order {
     private Long orderTime;
     private String deliveryAddress;
     private String restaurantAddress;
+    private String driverId;
     private Long expectedDeliveryTime;
     private Long deliveryTime;
     private OrderStatus orderStatus;

@@ -225,4 +225,58 @@ public class OrderService {
         }
     }
 
+    public ResponseEntity<List<Order>> getOrdersByStatus(OrderStatus status) {
+        try {
+            List<Order> orders = orderRepository.findByOrderStatus(status);
+            return new ResponseEntity<>(orders, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> assignDriverToOrder(String orderId, String driverId) {
+        try {
+            Order existingOrder = orderRepository.findById(orderId).orElse(null);
+            if (existingOrder == null) {
+                return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
+            }
+
+            // Update driver information
+            existingOrder.setDriverId(driverId);
+
+            // Update status if needed
+            if (existingOrder.getOrderStatus() == OrderStatus.READY) {
+                existingOrder.setOrderStatus(OrderStatus.ASSIGNED);
+                // Add to status history
+                existingOrder.getStatusHistory().add(
+                        new StatusChange(OrderStatus.ASSIGNED, System.currentTimeMillis())
+                );
+            }
+
+            // Save updated order
+            Order savedOrder = orderRepository.save(existingOrder);
+
+            // Notify delivery service about driver assignment
+            OrderNotificationDto notification = new OrderNotificationDto(
+                    savedOrder.getId(),
+                    savedOrder.getOrderStatus().name(),
+                    savedOrder.getCustomerId(),
+                    savedOrder.getRestaurantId(),
+                    savedOrder.getDeliveryAddress(),
+                    System.currentTimeMillis()
+            );
+
+//            deliveryInterface.notifyDelivery(notification);
+
+            return new ResponseEntity<>(
+                    new OrderUpdateResponse("Driver assigned successfully", savedOrder),
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Failed to assign driver", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
