@@ -1,5 +1,6 @@
 package com.floo.order_service.controller;
 
+import com.floo.order_service.dto.DriverAssignmentRequest;
 import com.floo.order_service.dto.OrderStatusUpdateRequest;
 import com.floo.order_service.model.Order;
 import com.floo.order_service.model.OrderStatus;
@@ -78,6 +79,16 @@ public class OrderController {
         return orderService.getOrdersByRestaurantId(restaurantId);
     }
 
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<Order>> getOrdersByStatus(@PathVariable OrderStatus status) {
+        return orderService.getOrdersByStatus(status);
+    }
+
+    @PatchMapping("/{orderId}/assign-driver")
+    public ResponseEntity<?> assignDriverToOrder(@PathVariable String orderId,
+                                                 @RequestBody DriverAssignmentRequest request) {
+        return orderService.assignDriverToOrder(orderId, request.getDriverId());
+    }
 
     // admin client
     // delivery service
