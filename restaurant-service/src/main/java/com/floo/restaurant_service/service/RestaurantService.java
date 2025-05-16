@@ -223,19 +223,25 @@ public class RestaurantService {
         order.setStatus(status);
         order.setUpdatedAt(LocalDateTime.now());
 
-        //notification to delivery person
+        // Notify customer on all status changes
+        notificationClient.sendNotification(
+                NotificationRequest.builder()
+                        .receiverUsername(order.getUserId())
+                        .title("Order Status Update")
+                        .message(String.format("Your order %s is now %s", orderId, status))
+                        .build()
+        );
+
+        // Special handling for READY_FOR_PICKUP
         if (status == Order.OrderStatus.READY_FOR_PICKUP) {
             deliveryServiceClient.notifyDeliveryReady(order);
-        }
 
-        //notification to customer
-        if (status != Order.OrderStatus.READY_FOR_PICKUP) {
+            // Also notify restaurant owner
             notificationClient.sendNotification(
                     NotificationRequest.builder()
-                            .receiverUsername(order.getUserId()) // Assuming userId is username
-                            .title("Order Status Update")
-                            .message(String.format("Your order %s is now %s",
-                                    order.getOrderId(), status))
+                            .receiverUsername(getRestaurantOwner(restaurantId))
+                            .title("Order Ready for Pickup")
+                            .message(String.format("Order %s is ready for pickup", orderId))
                             .build()
             );
         }
@@ -249,7 +255,7 @@ public class RestaurantService {
         return "Order status updated successfully";
         }
 
-    // delete restaurant
+    // delete a restaurant
     public void deleteRestaurant(String id) {
         restaurantRepository.deleteById(id);
     }

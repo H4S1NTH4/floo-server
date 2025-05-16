@@ -1,5 +1,6 @@
 package com.floo.restaurant_service.handler;
 
+import com.floo.restaurant_service.dto.MenuItemDto;
 import com.floo.restaurant_service.feign.NotificationClient;
 import com.floo.restaurant_service.feign.PaymentServiceClient;
 import com.floo.restaurant_service.model.MenuItem;
@@ -37,8 +38,16 @@ public class OrderNotificationHandler {
             return;
         }
 
-        // Fetch menu items to calculate total price
-        List<MenuItem> menuItems = menuItemService.getMenuItemsByIds(notification.getMenuItemIds());
+        // Fetch menu items one by one using existing getMenuItemById
+        List<MenuItemDto> menuItems = new ArrayList<>();
+        for (String itemId : notification.getMenuItemIds()) {
+            MenuItemDto item = menuItemService.getMenuItemById(itemId);
+            if (item != null) {
+                menuItems.add(item);
+            } else {
+                logger.warn("Menu item with ID {} not found", itemId);
+            }
+        }
         BigDecimal totalPrice = calculateTotalPrice(menuItems, notification.getMenuItemQuantities());
 
         // Build order
@@ -75,18 +84,19 @@ public class OrderNotificationHandler {
         );
     }
 
-    private BigDecimal calculateTotalPrice(List<MenuItem> menuItems, List<Integer> quantities) {
+    private BigDecimal calculateTotalPrice(List<MenuItemDto> menuItems, List<Integer> quantities) {
         BigDecimal total = BigDecimal.ZERO;
         for (int i = 0; i < menuItems.size(); i++) {
-            total = total.add(menuItems.get(i).getPrice().multiply(BigDecimal.valueOf(quantities.get(i))));
+            MenuItemDto item = menuItems.get(i);
+            total = total.add(item.getPrice().multiply(BigDecimal.valueOf(quantities.get(i))));
         }
         return total;
     }
 
-    private List<OrderItem> mapToOrderItems(OrderPlacedNotification notification, List<MenuItem> menuItems) {
+    private List<OrderItem> mapToOrderItems(OrderPlacedNotification notification, List<MenuItemDto> menuItems) {
         List<OrderItem> orderItems = new ArrayList<>();
         for (int i = 0; i < menuItems.size(); i++) {
-            MenuItem item = menuItems.get(i);
+            MenuItemDto item = menuItems.get(i);
             orderItems.add(OrderItem.builder()
                     .menuItemId(item.getId())
                     .name(item.getName())
