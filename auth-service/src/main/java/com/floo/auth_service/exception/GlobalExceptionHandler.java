@@ -29,5 +29,16 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT) // 409 Conflict is more appropriate for this case
                 .body(errorResponse);
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidCredentials(RuntimeException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", ex.getMessage());
+        errorResponse.put("errorType", "INVALID_CREDENTIALS");
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(errorResponse);
+    }
+
     // You can add more exception types if needed
 }

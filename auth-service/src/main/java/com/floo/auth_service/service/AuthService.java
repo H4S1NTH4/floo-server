@@ -152,4 +152,25 @@ public class AuthService {
                         .build())
                 .build();
     }
+
+    public Object updatePassword(UpdatePasswordRequest updatePasswordRequest, HttpServletRequest request) {
+        User user = getProfile(request);
+
+        if (!passwordEncoder.matches(updatePasswordRequest.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Old password is incorrect");
+        }
+
+        if (!updatePasswordRequest.getNewPassword().equals(updatePasswordRequest.getConfirmPassword())) {
+            throw new RuntimeException("New password and confirmation do not match");
+        }
+
+        user.setPassword(passwordEncoder.encode(updatePasswordRequest.getNewPassword()));
+        userRepository.save(user);
+
+        return "Password updated successfully";
+    }
+
+    public Object getAllUsers() {
+        return userRepository.findAll();
+    }
 }

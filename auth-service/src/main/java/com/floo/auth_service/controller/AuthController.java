@@ -88,6 +88,26 @@ public class AuthController {
     }
 
     /**
+     * Update the current authenticated user's password.
+     * @param updatePasswordRequest contains old and new passwords
+     * @param request used to identify current user
+     * @return success message
+     */
+    @PutMapping("/profile/password")
+    public ResponseEntity<?> updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest, HttpServletRequest request) {
+        return ResponseEntity.ok(authService.updatePassword(updatePasswordRequest, request));
+    }
+
+    /**
+     * Fetch all registered users.
+     * @return list of all users
+     */
+    @GetMapping("/allUsers")
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(authService.getAllUsers());
+    }
+
+    /**
      * Simple public endpoint to test if the auth service is up.
      * @return service status
      */
@@ -95,4 +115,5 @@ public class AuthController {
     public String testAuthService() {
         return "Auth Service is running!";
     }
+
 }
