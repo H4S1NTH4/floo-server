@@ -34,20 +34,24 @@ public class DeliveryController {
 
     @GetMapping("/driver/{driverId}/location")
     public ResponseEntity<?> getDriverLocation(@PathVariable String driverId) {
-        GeoLocation location = deliveryService.getDriverLocationById(driverId);
-        if (location != null && location.getLatitude() != null && location.getLongitude() != null) {
-            return ResponseEntity.ok(location);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return deliveryService.getDriverLocationById(driverId);
     }
-
-
 
   //get all drivers
     @PostMapping("/drivers")
     public ResponseEntity<?> createDriver(@RequestBody Driver driver) {
         return deliveryService.createDriver(driver);
+    }
+
+    //Updates the Location of an existing driver.
+    @PutMapping("/drivers/{driverId}/location")
+    public ResponseEntity<?> updateDriverLocation(@PathVariable String driverId, @RequestBody GeoLocation driverLocation) {
+
+        try {
+            return deliveryService.updateDriverLocation(driverId, driverLocation);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid Location value: ");
+        }
     }
 
     //Updates the status of an existing driver.

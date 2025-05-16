@@ -22,13 +22,13 @@ public class DeliveryService {
     public ResponseEntity<?> assignDriver(OrderDTO orderData) {
         Driver driver = findDriver(orderData);
 
-        if(driver==null){
+        if (driver == null) {
             return ResponseEntity.ok("no drivers at the moment");
         }
         driver.setStatus(DriverStatus.DELIVERY);
         driverRepository.save(driver);
         return ResponseEntity.ok(driver);
-    //get next action
+        //get next action
     }
 
     public Driver findDriver(OrderDTO orderDetails) {
@@ -110,12 +110,13 @@ public class DeliveryService {
 //         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 //         return R * c; // distance in km
 
-         //Simplified Cartesian distance for example purposes:
+        //Simplified Cartesian distance for example purposes:
         double dx = loc1.getLongitude() - loc2.getLongitude();
         double dy = loc1.getLatitude() - loc2.getLatitude();
         return Math.sqrt(dx * dx + dy * dy);
-       // return 0.0;
+        // return 0.0;
     }
+
     public ResponseEntity<?> createDriver(Driver driver) {
         try {
             // Ensure driver location is initialized if not provided
@@ -222,16 +223,35 @@ public class DeliveryService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving drivers: " + e.getMessage());
         }
     }
-    public GeoLocation getDriverLocationById(String driverId) {
+
+    public ResponseEntity<GeoLocation> getDriverLocationById(String driverId) {
         Optional<Driver> optionalDriver = driverRepository.findById(driverId);
         if (optionalDriver.isPresent()) {
-            return optionalDriver.get().getDriverLocation();
+            GeoLocation location = optionalDriver.get().getDriverLocation();
+            if (location != null && location.getLatitude() != null && location.getLongitude() != null) {
+                return ResponseEntity.ok(location);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
         }
-        return null; // or throw custom NotFoundException
+        return ResponseEntity.notFound().build();
     }
 
+    public ResponseEntity<?> updateDriverLocation(String driverId, GeoLocation driverLocation) {
+        Optional<Driver> driver = driverRepository.findById(driverId);
+        if (driver.isPresent()) {
+            driver.get().setDriverLocation(driverLocation);
+             driverRepository.save(driver.get());
+             return ResponseEntity.ok(driver.get());
+        }
+        else {
+            return ResponseEntity.notFound().build(); //driver not found
+        }
+    }
 
 }
+
+
 
 
 
