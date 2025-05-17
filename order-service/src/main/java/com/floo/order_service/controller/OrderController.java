@@ -65,6 +65,12 @@ public class OrderController {
         return orderService.getOrderById(orderId);
     }
 
+    //getOrders (order number)
+    @GetMapping("/number/{orderNumber}")
+    public ResponseEntity<?> getOrderByOrderNumber(@PathVariable Long orderNumber) {
+        return orderService.getOrderByOrderNumber(orderNumber);
+    }
+
     // customer client
     //getOrders (customer id)
     @GetMapping("/customer/{customerId}")
@@ -92,10 +98,10 @@ public class OrderController {
 
     // admin client
     // delivery service
-    //getOrders (order id, order status)
-    @GetMapping("/{orderId}/status/{status}")
-    public ResponseEntity<?> getOrderByIdAndStatus(@PathVariable String orderId, @PathVariable OrderStatus status) {
-        return orderService.getOrderByIdAndStatus(orderId, status);
+    //getOrders (driver id)
+    @GetMapping("/driver/{driverId}")
+    public ResponseEntity<List<Order>> getOrdersByDriverId(@PathVariable String driverId) {
+        return orderService.getOrdersByDriverId(driverId);
     }
 
 

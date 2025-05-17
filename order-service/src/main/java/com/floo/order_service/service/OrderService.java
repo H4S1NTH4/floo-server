@@ -279,4 +279,27 @@ public class OrderService {
         }
     }
 
+    public ResponseEntity<?> getOrderByOrderNumber(Long orderNumber) {
+        try {
+            Order order = orderRepository.findByOrderNumber(orderNumber);
+            if (order != null) {
+                return new ResponseEntity<>(order, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Error fetching order", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<List<Order>> getOrdersByDriverId(String driverId) {
+        try {
+            List<Order> orders = orderRepository.findByDriverId(driverId);
+            return new ResponseEntity<>(orders, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
