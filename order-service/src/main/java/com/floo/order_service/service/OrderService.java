@@ -292,4 +292,14 @@ public class OrderService {
             return new ResponseEntity<>("Error fetching order", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    public ResponseEntity<List<Order>> getOrdersByDriverId(String driverId) {
+        try {
+            List<Order> orders = orderRepository.findByDriverId(driverId);
+            return new ResponseEntity<>(orders, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

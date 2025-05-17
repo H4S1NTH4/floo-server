@@ -17,4 +17,6 @@ public interface OrderRepository extends MongoRepository<Order, String> {
     List<Order> findByOrderStatus(OrderStatus status);
 
     Order findByOrderNumber(Long orderNumber);
+
+    List<Order> findByDriverId(String driverId);
 }

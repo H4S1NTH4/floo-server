@@ -98,10 +98,10 @@ public class OrderController {
 
     // admin client
     // delivery service
-    //getOrders (order id, order status)
-    @GetMapping("/{orderId}/status/{status}")
-    public ResponseEntity<?> getOrderByIdAndStatus(@PathVariable String orderId, @PathVariable OrderStatus status) {
-        return orderService.getOrderByIdAndStatus(orderId, status);
+    //getOrders (driver id)
+    @GetMapping("/driver/{driverId}")
+    public ResponseEntity<List<Order>> getOrdersByDriverId(@PathVariable String driverId) {
+        return orderService.getOrdersByDriverId(driverId);
     }
 
 
