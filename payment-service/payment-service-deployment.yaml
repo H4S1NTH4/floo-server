@@ -24,6 +24,17 @@ spec:
                 secretKeyRef:
                   name: mongo-secret
                   key: MONGODB_URI
+            - name: STRIPE_SECRETKEY
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-secret
+                  key: STRIPE_API
+            - name: STRIPE_WEBHOOKSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-secret
+                  key: WHSEC
+
 ---
 apiVersion: v1
 kind: Service
