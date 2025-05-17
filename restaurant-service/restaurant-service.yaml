@@ -11,7 +11,7 @@ spec:
   ports:
     - port: 8080
       targetPort: 8080  # Port on the container
-      nodePort: 30001  # Accessible on port 30001 externally
+      nodePort: 30002  # Accessible on port 30001 externally
 
 
 
