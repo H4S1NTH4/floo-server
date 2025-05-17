@@ -14,10 +14,16 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: payment-service:le  # Or payment-service:latestlocal, etc.
-          imagePullPolicy: Never     # If you're building inside Minikube
+          image: payment-service:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8083
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_URI
 ---
 apiVersion: v1
 kind: Service
