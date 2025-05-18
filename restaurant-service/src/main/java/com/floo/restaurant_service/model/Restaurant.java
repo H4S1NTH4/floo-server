@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Document(collection = "restaurants")
 public class Restaurant {
-    //getters and setters
+
     @Id
     private String id;
     private String name;
@@ -40,6 +40,4 @@ public class Restaurant {
     public enum RestaurantStatus {
         OPEN, CLOSED, BUSY
     }
-
-
 }
