@@ -9,5 +9,17 @@ import java.util.Optional;
 @Repository
 public interface RestaurantRepository extends MongoRepository<Restaurant, String> {
     Optional<Restaurant> findByOwnerUsername(String username);
+    // Get all restaurants (used by admin)
+    List<Restaurant> findAll();
+
+    // Get pending restaurants (isVerified = false)
     List<Restaurant> findByIsVerifiedFalse();
+
+    // Find restaurants by status
+    List<Restaurant> findByStatus(Restaurant.RestaurantStatus status);
+
+    Optional<Restaurant> findById(String id);
+
+    // Find restaurant by owner ID (if you need this later)
+    // List<Restaurant> findByOwner_OwnerId(String ownerId);
 }

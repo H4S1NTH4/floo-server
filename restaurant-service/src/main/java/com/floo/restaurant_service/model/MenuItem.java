@@ -23,5 +23,7 @@ public class MenuItem {
     private BigDecimal price;
     private Binary icon;
     private Integer quantity;
+    private String category;
     private String restaurantId;
+    private int totalSales = 0;
 }
