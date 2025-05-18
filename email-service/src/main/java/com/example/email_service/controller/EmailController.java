@@ -1,7 +1,9 @@
 package com.example.email_service.controller;
 
+import com.example.email_service.model.Email;
 import com.example.email_service.service.EmailService;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,11 +16,8 @@ public class EmailController {
     }
 
     @PostMapping("/send-email")
-    public String sendEmail(
-            @RequestParam String to,
-            @RequestParam String subject,
-            @RequestParam String text) {
-        emailService.sendEmail(to, subject, text);
+    public String sendEmail(@RequestBody Email email) {
+        emailService.sendEmail(email.getTo(), email.getSubject(), email.getText());
         return "Email sending triggered!";
     }
 }
