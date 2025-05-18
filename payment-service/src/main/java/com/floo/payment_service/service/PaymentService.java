@@ -1,6 +1,6 @@
 package com.floo.payment_service.service;
 
-import com.floo.payment_service.entity.Payment;
+import com.floo.payment_service.model.Payment;
 import com.floo.payment_service.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

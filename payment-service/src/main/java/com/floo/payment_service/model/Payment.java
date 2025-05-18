@@ -1,4 +1,4 @@
-package com.floo.payment_service.entity;
+package com.floo.payment_service.model;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;

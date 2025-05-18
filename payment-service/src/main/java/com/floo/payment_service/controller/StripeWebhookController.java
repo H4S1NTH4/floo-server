@@ -1,9 +1,10 @@
 package com.floo.payment_service.controller;
 
-import com.floo.payment_service.entity.Payment;
-import com.floo.payment_service.entity.PaymentStatus;
+import com.floo.payment_service.model.Payment;
+import com.floo.payment_service.model.PaymentStatus;
 import com.floo.payment_service.repository.PaymentRepository;
 
+import com.floo.payment_service.service.EmailService;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.stripe.Stripe;
@@ -11,6 +12,7 @@ import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,9 @@ import java.time.Instant;
 @RestController
 @RequestMapping("/webhook")
 public class StripeWebhookController {
+
+    @Autowired
+    EmailService emailService;
 
     @Value("${stripe.secretKey}")
     private String secretKey;
@@ -70,7 +75,9 @@ public class StripeWebhookController {
                 payment.setStatus(PaymentStatus.COMPLETED);
                 payment.setUpdatedAt(Instant.now());
                 paymentRepository.save(payment);
+                emailService.sendSuccessEmail(payment.getId(), payment.getAmount().toString(), "Jayasekara M P S S");
             }
+
         }
         // (You can handle other event types here as needed.)
     }

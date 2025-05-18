@@ -1,6 +1,6 @@
 package com.floo.payment_service.repository;
 
-import com.floo.payment_service.entity.Payment;
+import com.floo.payment_service.model.Payment;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
