@@ -75,7 +75,7 @@ public class StripeWebhookController {
                 payment.setStatus(PaymentStatus.COMPLETED);
                 payment.setUpdatedAt(Instant.now());
                 paymentRepository.save(payment);
-                emailService.sendSuccessEmail(payment.getId(), payment.getAmount().toString(), payment.getName());
+                emailService.sendSuccessEmail(payment.getId(), payment.getAmount().toString(), "Jayasekara M P S S");
             }
 
         }
