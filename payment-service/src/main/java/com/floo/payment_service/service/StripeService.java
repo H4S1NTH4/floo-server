@@ -3,13 +3,16 @@ package com.floo.payment_service.service;
 
 import com.floo.payment_service.dto.ProductRequest;
 import com.floo.payment_service.dto.StripeResponse;
-import com.floo.payment_service.entity.Payment;
-import com.floo.payment_service.entity.PaymentStatus;
+import com.floo.payment_service.feign.EmailInterface;
+import com.floo.payment_service.model.Email;
+import com.floo.payment_service.model.Payment;
+import com.floo.payment_service.model.PaymentStatus;
 import com.floo.payment_service.repository.PaymentRepository;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -77,6 +80,7 @@ public class StripeService {
             payment.setStripeSessionId(session.getId());
             payment.setUpdatedAt(Instant.now());
             paymentRepository.save(payment);
+
 
             return StripeResponse.builder()
                     .status("SUCCESS")
