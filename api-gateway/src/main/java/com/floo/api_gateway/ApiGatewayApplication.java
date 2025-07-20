@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @SpringBootApplication
-@EnableDiscoveryClient
+@EnableDiscoveryClient+
 public class ApiGatewayApplication {
 
 	public static void main(String[] args) {

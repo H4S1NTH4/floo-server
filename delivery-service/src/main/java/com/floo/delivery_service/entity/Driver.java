@@ -9,13 +9,14 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Driver {
     @Id
     private String driverId;
+    private String driverIdxx;
     private String name;
     private DriverStatus status;
     private Boolean available;
     private GeoLocation driverLocation;
 
 
-    // Default constructor - Jackson and JPA/Mongo might still need this for some operations
+    // Default constructor - Jackson and JPA/Mongo might still babaneed this for some operations
     public Driver() {
         // Initialize driverLocation to avoid NullPointerException if accessed before being set
         this.driverLocation = new GeoLocation();
